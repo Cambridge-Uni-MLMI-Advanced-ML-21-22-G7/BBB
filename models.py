@@ -1,4 +1,5 @@
 import os
+from random import sample
 from tqdm import tqdm 
 import torch
 from torch import nn
@@ -40,14 +41,23 @@ class BNN(nn.Module):
                     nn.ReLU(),
                     BFC(self.hidden_units, self.output_dim, self.weight_mu, self.weight_rho, self.prior_params))
 
-        self.optimiser = torch.optim.Adam(self.model.parameters(), lr=self.lr)
-        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimiser,step_size=100, gamma=0.5)
-
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer,step_size=100, gamma=0.5)
 
 
     def forward(self, x):
         x = x.view(-1, self.input_dim) # flatten images, necessary for classification
         return self.model.forward(x) 
+
+    def inference(self, x):
+        """ Here we do not draw weights but take the mean """
+        x = x.view(-1, self.input_dim)
+        for layer in self.model:
+            if layer == BFC:
+                x = layer.forward(x, sample=False)
+            else:
+                x = layer.forward(x)
+        return x
 
     def log_prior(self):
         log_prior = 0
@@ -76,7 +86,7 @@ class BNN(nn.Module):
         nll = torch.zeros(1)
 
         for i in range(num_samples):
-            preds = self.forward(x)
+            preds = self.inference(x)
             log_priors[i] = self.log_prior()
             log_variational_posteriors[i] = self.log_posterior()
             nll += self.get_nll(preds, y)
@@ -100,7 +110,8 @@ class BNN(nn.Module):
             model_loss = self.loss_info[0] # loss = kl + nll
             model_loss.backward(retain_graph=True)          # called on the last layer, need retain_graph for some reason
             
-            self.optimiser.step()
+            # To inspect optimizer loss, which currently always returns None (problematic)
+            # logger.info("\nOptimizer loss: {}\n".format(self.optimizer.step()))
 
 
     def predict(self, X):

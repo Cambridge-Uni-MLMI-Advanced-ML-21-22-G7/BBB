@@ -32,6 +32,10 @@ X_val = load_mnist(train=False, batch_size=params['batch_size'], shuffle=True)
 epochs = params['epochs']
 for epoch in tqdm(range(epochs)):
     net.train(X_train)
+    
+    # If you want to check the parameter values, uncomment the below
+    # print(net.optimizer.param_groups)
+    
     net.scheduler.step()
     net.eval(X_val)
 

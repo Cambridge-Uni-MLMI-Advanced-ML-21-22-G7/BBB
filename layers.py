@@ -48,11 +48,8 @@ class BFC(nn.Module):
         self.log_prior = 0
         self.log_posterior = 0
 
-        print(dim_in)
-        print(dim_out)
-
     def forward(self, input, sample=True):
-        """ For every forward pass, we are drawing weights (incl. bias) and return a determinstic forward mapping"""
+        """ For every forward pass in training, we are drawing weights (incl. bias) and return a determinstic forward mapping"""
         
         if self.training or sample:
             # draw weights
@@ -62,6 +59,13 @@ class BFC(nn.Module):
             # Compute free energy
             self.log_prior = self.w_prior.log_prob(w).sum() + self.b_prior.log_prob(b).sum() # log P(w) in eq (2)
             self.log_posterior = self.weights.log_prob(w).sum() + self.bias.log_prob(b).sum()  # log q(w|theta) in eq (2)
+
+        else:
+            w = self.weights.mu
+            b = self.bias.mu
+
+            self.log_prior = 0
+            self.log_posterior = 0
             
         # Get weight data
         # print("input: ", input.size())
