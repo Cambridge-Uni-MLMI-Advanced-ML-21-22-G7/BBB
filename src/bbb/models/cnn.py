@@ -1,6 +1,5 @@
 import torch
 from torch import nn, optim
-from torch.autograd import Variable
 import torch.nn.functional as F
 
 from bbb.parameters import Parameters
@@ -54,11 +53,8 @@ class CNN(nn.Module):
         self.model.train()
 
         for i, (inputs, labels) in enumerate(train_data):
-            b_x = Variable(inputs, requires_grad=False)
-            b_y = Variable(labels)
-        
-            output = self(b_x)
-            loss = self.criterion(output, b_y)
+            output = self(inputs)
+            loss = self.criterion(output, labels)
 
             self.optimizer.zero_grad()
             loss.backward()
