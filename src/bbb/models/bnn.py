@@ -3,7 +3,7 @@ import logging
 from random import sample
 
 import torch
-from torch import nn
+from torch import nn, optim
 from tqdm import tqdm 
 
 from bbb.parameters import Parameters
@@ -45,13 +45,13 @@ class BNN(nn.Module):
         )
 
         # Optimizer
-        self.optimizer = torch.optim.Adam(
+        self.optimizer = optim.Adam(
             self.model.parameters(),
             lr=self.lr
         )
 
         # Scheduler
-        self.scheduler = torch.optim.lr_scheduler.StepLR(
+        self.scheduler = optim.lr_scheduler.StepLR(
             self.optimizer,step_size=100,
             gamma=0.5
         )

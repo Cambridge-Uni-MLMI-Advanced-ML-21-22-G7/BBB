@@ -14,15 +14,15 @@ class Parameters:
     name: str
     input_dim: int
     output_dim: int
-    hidden_units: int
-    weight_mu: List[float]                      # range for mu 
-    weight_rho: List[float]                     # range for rho
-    prior_params: PriorParameters
     batch_size: int
     lr: float
     epochs: int
-    elbo_samples: int                           # to draw for ELBO (training)
-    inference_samples: int                      # to draw for inference
+    hidden_units: int = None
+    weight_mu: List[float] = None               # range for mu 
+    weight_rho: List[float] = None              # range for rho
+    prior_params: PriorParameters = None
+    elbo_samples: int = None                    # to draw for ELBO (training)
+    inference_samples: int = None               # to draw for inference
     save_dir: str = MODEL_SAVE_DIR
 
 

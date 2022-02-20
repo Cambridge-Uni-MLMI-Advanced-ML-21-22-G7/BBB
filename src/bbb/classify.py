@@ -5,7 +5,8 @@ import torch
 from tqdm import tqdm 
 
 from bbb.parameters import Parameters, PriorParameters
-from bbb.models import BNN
+from bbb.models.bnn import BNN
+from bbb.models.cnn import CNN
 from bbb.data import load_mnist
 
 
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-CLASSIFY_PARAMETERS = Parameters(
+BBB_CLASSIFY_PARAMETERS = Parameters(
     name = "test",
     input_dim = 28*28,
     output_dim = 10,
@@ -31,14 +32,14 @@ CLASSIFY_PARAMETERS = Parameters(
     inference_samples = 10,
 )
 
-def run_mnist_classification():
+def run_bbb_mnist_classification():
     logger.info('Beginning classification training...')
-    net = BNN(params=CLASSIFY_PARAMETERS)
+    net = BNN(params=BBB_CLASSIFY_PARAMETERS)
 
-    X_train = load_mnist(train=True, batch_size=CLASSIFY_PARAMETERS.batch_size, shuffle=True)
-    X_val = load_mnist(train=False, batch_size=CLASSIFY_PARAMETERS.batch_size, shuffle=True)
+    X_train = load_mnist(train=True, batch_size=BBB_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
+    X_val = load_mnist(train=False, batch_size=BBB_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
 
-    epochs = CLASSIFY_PARAMETERS.epochs
+    epochs = BBB_CLASSIFY_PARAMETERS.epochs
     for epoch in tqdm(range(epochs)):
         net.train(X_train)
         
@@ -49,14 +50,41 @@ def run_mnist_classification():
         net.scheduler.step()
         net.eval(X_val)
 
-        logger.info(f'[Epoch {epoch}/{epochs}] - acc: {net.acc}')
+        logger.info(f'[Epoch {epoch+1}/{epochs}] - Acc: {net.acc}')
         if net.best_acc  and net.acc > net.best_acc:
             net.best_acc = net.acc
             torch.save(net.model.state_dict(), net.save_model_path)
 
     logger.info('Completed classification training...')
 
+
+CNN_CLASSIFY_PARAMETERS = Parameters(
+    name = "CNN",
+    input_dim = 28*28,
+    output_dim = 10,
+    hidden_units = 1200,
+    batch_size = 128,
+    lr = 0.01,
+    epochs = 10,
+)
+
+def run_cnn_mnist_classification():
+    logger.info('Beginning classification training...')
+    net = CNN(params=CNN_CLASSIFY_PARAMETERS)
+
+    X_train = load_mnist(train=True, batch_size=CNN_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
+    X_val = load_mnist(train=False, batch_size=CNN_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
+
+    epochs = 10
+    for epoch in tqdm(range(epochs)):
+        loss = net.train(X_train)
+        logger.info(f'[Epoch {epoch+1}/{epochs}] - Loss: {loss}')
+
+    accuracy = net.eval(X_val)
+    logger.info(f'Accuracy: {accuracy}')
+
 if __name__ == '__main__':
     logger.info('Beginning execution...')
-    run_mnist_classification()
+    # run_bbb_mnist_classification()
+    run_cnn_mnist_classification()
     logger.info('Completed execution')
