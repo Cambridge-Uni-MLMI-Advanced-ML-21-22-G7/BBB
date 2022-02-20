@@ -17,6 +17,7 @@ class Parameters:
     batch_size: int
     lr: float
     epochs: int
+    hidden_layers: int = 1
     hidden_units: int = None
     weight_mu: List[float] = None               # range for mu 
     weight_rho: List[float] = None              # range for rho

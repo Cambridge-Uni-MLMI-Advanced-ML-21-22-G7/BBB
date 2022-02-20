@@ -1,5 +1,4 @@
 import logging
-import logging
 
 import torch
 from tqdm import tqdm 
@@ -75,7 +74,7 @@ def run_cnn_mnist_classification():
     X_train = load_mnist(train=True, batch_size=CNN_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
     X_val = load_mnist(train=False, batch_size=CNN_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
 
-    epochs = 10
+    epochs = CNN_CLASSIFY_PARAMETERS.epochs
     for epoch in tqdm(range(epochs)):
         loss = net.train(X_train)
         logger.info(f'[Epoch {epoch+1}/{epochs}] - Loss: {loss}')
