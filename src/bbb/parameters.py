@@ -19,9 +19,10 @@ class Parameters:
     epochs: int
     hidden_layers: int = 1
     hidden_units: int = None
-    weight_mu: List[float] = None               # range for mu 
-    weight_rho: List[float] = None              # range for rho
+    weight_mu: List[float] = None         # range for mu 
+    weight_rho: List[float] = None        # range for rho
     prior_params: PriorParameters = None
-    elbo_samples: int = None                    # to draw for ELBO (training)
-    inference_samples: int = None               # to draw for inference
+    elbo_samples: int = None              # to draw for ELBO (training)
+    inference_samples: int = None         # to draw for inference
+    kl_reweighting_type: int = None       # method used for KL reweighting      
     save_dir: str = MODEL_SAVE_DIR
