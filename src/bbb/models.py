@@ -1,13 +1,13 @@
 import os
+import logging
 from random import sample
-from tqdm import tqdm 
+
 import torch
 from torch import nn
-from layers import BFC
-import logging
+from tqdm import tqdm 
 
 from bbb.parameters import Parameters
-
+from bbb.layers import BFC
 
 logger = logging.getLogger(__name__)
 
