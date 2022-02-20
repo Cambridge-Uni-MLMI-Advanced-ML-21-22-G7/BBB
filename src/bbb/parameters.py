@@ -24,5 +24,3 @@ class Parameters:
     elbo_samples: int = None                    # to draw for ELBO (training)
     inference_samples: int = None               # to draw for inference
     save_dir: str = MODEL_SAVE_DIR
-
-
