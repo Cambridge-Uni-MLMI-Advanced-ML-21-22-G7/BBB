@@ -1,6 +1,5 @@
 import torch
 from torch import nn, optim
-from torch.autograd import Variable
 import torch.nn.functional as F
 
 from bbb.parameters import Parameters
@@ -61,11 +60,8 @@ class DNN(nn.Module):
         self.model.train()
 
         for i, (x, y) in enumerate(train_data):
-            b_x = Variable(x, requires_grad=False)
-            b_y = Variable(y)
-        
-            output = self(b_x)
-            loss = self.criterion(output, b_y)
+            output = self(x)
+            loss = self.criterion(output, y)
 
             self.optimizer.zero_grad()
             loss.backward()
