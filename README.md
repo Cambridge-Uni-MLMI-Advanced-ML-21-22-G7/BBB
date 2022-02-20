@@ -26,7 +26,7 @@ pip install --upgrade torchvision==0.10.0
 
 Whilst all code written is our own, the following repositories were used as sources of inspiration when implementing this project:
 
-- [https://github.com/JavierAntoran/Bayesian-Neural-Networks](Bayesian Neural Networks)
-- [https://github.com/danielkelshaw/WeightUncertainty](Weight Uncertainty)
-- [https://github.com/kumar-shridhar/PyTorch-BayesianCNN](PyTorch Bayesian CNN)
-- [https://github.com/saxena-mayur/Weight-Uncertainty-in-Neural-Networks](Weight Uncertainty in Neural Networks)
+- [Bayesian Neural Networks](https://github.com/JavierAntoran/Bayesian-Neural-Networks)
+- [Weight Uncertainty](https://github.com/danielkelshaw/WeightUncertainty)
+- [PyTorch Bayesian CNN](https://github.com/kumar-shridhar/PyTorch-BayesianCNN)
+- [Weight Uncertainty in Neural Networks](https://github.com/saxena-mayur/Weight-Uncertainty-in-Neural-Networks)
