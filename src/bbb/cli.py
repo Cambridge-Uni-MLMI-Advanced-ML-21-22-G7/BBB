@@ -11,7 +11,7 @@ def init_argparse() -> argparse.ArgumentParser:
     :rtype: argparse.ArgumentParser
     """
     parser = argparse.ArgumentParser(
-        usage="%(prog)s [MODEL TYPE] [ARGS]...",
+        usage="%(prog)s [MODEL TYPE] [-d]...",
         description="Run the Bayes-by-Backprop code."
     )
     parser.add_argument(
