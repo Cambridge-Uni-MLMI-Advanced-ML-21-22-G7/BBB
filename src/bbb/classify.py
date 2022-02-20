@@ -10,11 +10,10 @@ from bbb.data import load_mnist
 
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 
 BBB_CLASSIFY_PARAMETERS = Parameters(
-    name = "test",
+    name = "BBB_classification",
     input_dim = 28*28,
     output_dim = 10,
     hidden_units = 1200,
@@ -58,7 +57,7 @@ def run_bbb_mnist_classification():
 
 
 CNN_CLASSIFY_PARAMETERS = Parameters(
-    name = "CNN",
+    name = "CNN_classification",
     input_dim = 28*28,
     output_dim = 10,
     hidden_units = 1200,
@@ -81,9 +80,3 @@ def run_cnn_mnist_classification():
 
     accuracy = net.eval(X_val)
     logger.info(f'Accuracy: {accuracy}')
-
-if __name__ == '__main__':
-    logger.info('Beginning execution...')
-    # run_bbb_mnist_classification()
-    run_cnn_mnist_classification()
-    logger.info('Completed execution')
