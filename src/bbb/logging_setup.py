@@ -7,4 +7,4 @@ logging.basicConfig(
     level=logging.DEBUG,
     # level=logging.INFO,
 )
-logging.getLogger('matplotlib.font_manager').disabled = True
+logging.getLogger('matplotlib').setLevel(logging.INFO)

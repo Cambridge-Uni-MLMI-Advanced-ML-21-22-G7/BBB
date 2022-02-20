@@ -27,4 +27,5 @@ setuptools.setup(
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.9",
     install_requires=required,
+    entry_points={'console_scripts':['bbb=bbb.cli:main']},
 )
