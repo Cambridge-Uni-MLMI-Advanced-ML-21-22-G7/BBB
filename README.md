@@ -1,6 +1,6 @@
 # BBB
 
-# Environment Setup/Installation
+## Environment Setup/Installation
 
 Create a fresh Python 3.9 environment using venv, pyenv or conda (as preferred). Then, execute `setup.sh` to install the required python libraries and versions.
 
@@ -13,10 +13,20 @@ source .venv/bin/activate
 ./setup.sh
 ```
 
-# M1 Torch Issue
+### M1 Torch Issue
 
-If running on M1, do this:
+If running on M1 you will need to ensure the following library versions are being used. These should already be set in `requirements.txt`.
+
 ```
 pip install --upgrade torch==1.9.0
 pip install --upgrade torchvision==0.10.0
 ```
+
+## Citations
+
+Whilst all code written is our own, the following repositories were used as sources of inspiration when implementing this project:
+
+- [https://github.com/JavierAntoran/Bayesian-Neural-Networks](Bayesian Neural Networks)
+- [https://github.com/danielkelshaw/WeightUncertainty](Weight Uncertainty)
+- [https://github.com/kumar-shridhar/PyTorch-BayesianCNN](PyTorch Bayesian CNN)
+- [https://github.com/saxena-mayur/Weight-Uncertainty-in-Neural-Networks](Weight Uncertainty in Neural Networks)
