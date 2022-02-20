@@ -4,6 +4,7 @@ from torch.nn import Parameter
 import torch
 import math
 
+
 class BayesianWeight(nn.Module):
     def __init__(self, mu, rho, dim_in=None, dim_out=None) -> None:
         super().__init__()
@@ -41,9 +42,9 @@ class BFC(nn.Module):
         self.bias = BayesianWeight(weight_mu, weight_rho, dim_out=dim_out)
 
         # Set prior
-        assert len(list(prior_params.keys())) == 2, "Currently implemented prior requires 2 parameter"
-        self.w_prior = distributions.Normal(0, prior_params['w_sigma'])
-        self.b_prior = distributions.Normal(0, prior_params['b_sigma'])
+        assert prior_params.w_sigma and prior_params.b_sigma  # Assert that the required prior parameters are present
+        self.w_prior = distributions.Normal(0, prior_params.w_sigma)
+        self.b_prior = distributions.Normal(0, prior_params.b_sigma)
 
         self.log_prior = 0
         self.log_posterior = 0

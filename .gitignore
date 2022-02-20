@@ -129,4 +129,5 @@ dmypy.json
 .pyre/
 
 # Data directory
-mnist/
+data/
+saved_models/

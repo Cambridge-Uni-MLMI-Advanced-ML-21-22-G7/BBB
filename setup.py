@@ -23,8 +23,8 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    package_dir={"": "bbb"},
-    packages=setuptools.find_packages(where="bbb"),
-    python_requires=">=3.6",
+    package_dir={"": "src"},
+    packages=setuptools.find_packages(where="src"),
+    python_requires=">=3.9",
     install_requires=required,
 )

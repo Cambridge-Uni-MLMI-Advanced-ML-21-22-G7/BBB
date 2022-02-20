@@ -6,43 +6,55 @@ from torch import nn
 from layers import BFC
 import logging
 
+from bbb.parameters import Parameters
+
+
 logger = logging.getLogger(__name__)
 
 class BNN(nn.Module):
     """ Bayesian (Weights) Neural Network """
-    def __init__(self, params) -> None:
+    def __init__(self, params: Parameters) -> None:
         super().__init__()
 
         # Parameters
-        self.input_dim = params['input_dim'] # params.get('input_dim', "default value")
-        self.hidden_units = params['hidden_units']
-        self.output_dim = params['output_dim']
-        self.weight_mu = params['weight_mu']
-        self.weight_rho = params['weight_rho']
-        self.prior_params = params['prior_params']
-        self.elbo_samples = params['elbo_samples'] # num samples to draw for ELBO
-        self.inference_samples = params['inference_samples'] # num samples to draw for ELBO
-        self.batch_size = params['batch_size']
-        self.lr = params['lr']
+        self.input_dim = params.input_dim # params.get('input_dim', "default value")
+        self.hidden_units = params.hidden_units
+        self.output_dim = params.output_dim
+        self.weight_mu = params.weight_mu
+        self.weight_rho = params.weight_rho
+        self.prior_params = params.prior_params
+        self.elbo_samples = params.elbo_samples # num samples to draw for ELBO
+        self.inference_samples = params.inference_samples # num samples to draw for ELBO
+        self.batch_size = params.batch_size
+        self.lr = params.lr
 
-        # Logs
-        self.name = params['name']
+        # Save Model
+        self.name = params.name
         self.best_acc = None
-        self.model_path = f'{params["save_dir"]}/{params["name"]}_model.pt'
-        if not os.path.exists(params['save_dir']):
-            os.makedirs(params['save_dir'])
-        
+        self.model_path = os.path.join(params.save_dir, f'{params.name}_model.pt')
+        if not os.path.exists(params.save_dir):
+            os.makedirs(params.save_dir)
 
         # Model
         self.model = nn.Sequential(
-                    BFC(self.input_dim, self.hidden_units, self.weight_mu, self.weight_rho, self.prior_params), 
-                    nn.ReLU(),
-                    BFC(self.hidden_units, self.hidden_units, self.weight_mu, self.weight_rho, self.prior_params),
-                    nn.ReLU(),
-                    BFC(self.hidden_units, self.output_dim, self.weight_mu, self.weight_rho, self.prior_params))
+            BFC(self.input_dim, self.hidden_units, self.weight_mu, self.weight_rho, self.prior_params), 
+            nn.ReLU(),
+            BFC(self.hidden_units, self.hidden_units, self.weight_mu, self.weight_rho, self.prior_params),
+            nn.ReLU(),
+            BFC(self.hidden_units, self.output_dim, self.weight_mu, self.weight_rho, self.prior_params)
+        )
 
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
-        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer,step_size=100, gamma=0.5)
+        # Optimizer
+        self.optimizer = torch.optim.Adam(
+            self.model.parameters(),
+            lr=self.lr
+        )
+
+        # Scheduler
+        self.scheduler = torch.optim.lr_scheduler.StepLR(
+            self.optimizer,step_size=100,
+            gamma=0.5
+        )
 
 
     def forward(self, x):
@@ -80,7 +92,7 @@ class BNN(nn.Module):
         return nll
 
     def sample_ELBO(self, x, y, beta, num_samples):
-        """ run X through the (sampled) model <samples> times"""
+        """Run X through the (sampled) model <samples> times"""
         log_priors = torch.zeros(num_samples)
         log_variational_posteriors = torch.zeros(num_samples)
         nll = torch.zeros(1)
@@ -107,8 +119,8 @@ class BNN(nn.Module):
             self.model.zero_grad()
             self.loss_info = self.sample_ELBO(X, Y, beta, self.elbo_samples)            
             
-            model_loss = self.loss_info[0] # loss = kl + nll
-            model_loss.backward(retain_graph=True)          # called on the last layer, need retain_graph for some reason
+            model_loss = self.loss_info[0]  # loss = kl + nll
+            model_loss.backward(retain_graph=True) # called on the last layer, need retain_graph for some reason
             
             # To inspect optimizer loss, which currently always returns None (problematic)
             # logger.info("\nOptimizer loss: {}\n".format(self.optimizer.step()))
