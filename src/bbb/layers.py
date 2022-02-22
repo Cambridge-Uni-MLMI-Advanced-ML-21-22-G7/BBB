@@ -24,14 +24,19 @@ class GaussianVarPost(nn.Module):
 
         self.mu = Parameter(mu_tensor)
         self.rho = Parameter(rho_tensor)
-        self.sigma = torch.log1p(1+torch.exp(self.rho)) # section 3.2: \sigma = log(1+exp(\rho))
-        self.dist = distributions.Normal(loc=self.mu, scale=self.sigma)
+
+    @property
+    def sigma(self):
+        return torch.log1p(1+torch.exp(self.rho)) # section 3.2: \sigma = log(1+exp(\rho))
 
     def sample(self):
-        return self.dist.sample().to(DEVICE)
+        epsilon = distributions.Normal(0,1).sample(self.rho.size()).to(DEVICE)
+        sample = self.mu + self.sigma * epsilon
+        return sample
 
     def log_prob(self, value):
-        return self.dist.log_prob(value)
+        log_prob = distributions.Normal(loc=self.mu, scale=self.sigma).log_prob(value)
+        return log_prob
 
 class BFC(nn.Module):
     """Bayesian (Weights) Fully Connected Layer"""
