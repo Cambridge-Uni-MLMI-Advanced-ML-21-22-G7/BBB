@@ -19,7 +19,7 @@ class RegressionDataset(Dataset):
     def __init__(
         self,
         size: int = 100,
-        seed: Union[int, None] = None
+        seed: Union[int, None] = 0
     ) -> None:
         """Creating the regression dataset used in the paper.
         Values ashere to the following equation, where ɛ~𝒩(0,0.02).
@@ -28,7 +28,7 @@ class RegressionDataset(Dataset):
 
         :param size: size of vector to generate, defaults to 100
         :type size: int, optional
-        :param seed: random seed to be used, defaults to None
+        :param seed: random seed to be used, defaults to 0
         :type seed: Union[int, None], optional
         """
         super().__init__()
