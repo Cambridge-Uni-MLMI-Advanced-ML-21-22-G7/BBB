@@ -11,4 +11,4 @@ if torch.cuda.is_available():
 else:
     logger.debug('CUDA unavailable - PyTorch will use CPU')
     dev = 'cpu'
-device = torch.device(dev)
+DEVICE = torch.device(dev)

@@ -2,7 +2,7 @@ import logging
 import argparse
 from ctypes import ArgumentError
 
-from bbb.regression import run_dnn_regression
+from bbb.regression import run_bbb_regression, run_dnn_regression
 from bbb.classify import run_bbb_mnist_classification, run_cnn_mnist_classification
 
 
@@ -49,7 +49,7 @@ def main() -> None:
         if args.deterministic:
             run_dnn_regression()
         else:
-            raise ArgumentError('Bayesian regression not yet implemented')
+            run_bbb_regression()
     elif args.model_type == 'class':
         if args.deterministic:
             run_cnn_mnist_classification()

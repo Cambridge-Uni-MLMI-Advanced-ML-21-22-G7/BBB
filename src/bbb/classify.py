@@ -4,7 +4,7 @@ import torch
 from tqdm import tqdm 
 
 from bbb.parameters import Parameters, PriorParameters
-from bbb.models.bnn import BNN
+from bbb.models.bnn import ClassificationBNN
 from bbb.models.cnn import CNN
 from bbb.data import load_mnist
 
@@ -32,7 +32,7 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
 
 def run_bbb_mnist_classification():
     logger.info('Beginning classification training...')
-    net = BNN(params=BBB_CLASSIFY_PARAMETERS)
+    net = ClassificationBNN(params=BBB_CLASSIFY_PARAMETERS)
 
     X_train = load_mnist(train=True, batch_size=BBB_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
     X_val = load_mnist(train=False, batch_size=BBB_CLASSIFY_PARAMETERS.batch_size, shuffle=True)

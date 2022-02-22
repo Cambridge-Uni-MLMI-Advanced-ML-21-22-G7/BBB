@@ -4,8 +4,10 @@ from torch.nn import Parameter
 import torch
 import math
 
+from bbb.pytorch_setup import DEVICE
 
-class BayesianWeight(nn.Module):
+
+class GaussianVarPost(nn.Module):
     def __init__(self, mu, rho, dim_in=None, dim_out=None) -> None:
         super().__init__()
 
@@ -16,54 +18,55 @@ class BayesianWeight(nn.Module):
             # Return torch.mm(input, w) + b  in fwd pass if using commented out lines
             # mu_tensor = torch.Tensor(dim_in, dim_out).uniform_(*mu)
             # rho_tensor = torch.Tensor(dim_in, dim_out).uniform_(*rho)
-            
+
             mu_tensor = torch.Tensor(dim_out, dim_in).uniform_(*mu)
             rho_tensor = torch.Tensor(dim_out, dim_in).uniform_(*rho)
 
         self.mu = Parameter(mu_tensor)
         self.rho = Parameter(rho_tensor)
-        self.sigma = torch.log1p(torch.exp(self.rho)) # section 3.2: \sigma = log(1+exp(\rho))
+        self.sigma = torch.log1p(1+torch.exp(self.rho)) # section 3.2: \sigma = log(1+exp(\rho))
         self.dist = distributions.Normal(loc=self.mu, scale=self.sigma)
 
     def sample(self):
-        return self.dist.sample()
+        return self.dist.sample().to(DEVICE)
 
     def log_prob(self, value):
         return self.dist.log_prob(value)
 
 class BFC(nn.Module):
-    """ Bayesian (Weights) Fully Connected Layer """
+    """Bayesian (Weights) Fully Connected Layer"""
     
     def __init__(self, dim_in, dim_out, weight_mu, weight_rho, prior_params):
         super().__init__()
         
-        # Create IN X OUT weight tensor that we can sample from 
-        self.weights = BayesianWeight(weight_mu, weight_rho, dim_in=dim_in, dim_out=dim_out)
-        self.bias = BayesianWeight(weight_mu, weight_rho, dim_out=dim_out)
+        # Create IN X OUT weight tensor that we can sample from
+        # This is the variational posterior over the weights
+        self.w_var_post = GaussianVarPost(weight_mu, weight_rho, dim_in=dim_in, dim_out=dim_out)
+        self.b_var_post = GaussianVarPost(weight_mu, weight_rho, dim_out=dim_out)
 
-        # Set prior
+        # Set Prior distribution over the weights
         assert prior_params.w_sigma and prior_params.b_sigma  # Assert that the required prior parameters are present
         self.w_prior = distributions.Normal(0, prior_params.w_sigma)
         self.b_prior = distributions.Normal(0, prior_params.b_sigma)
 
         self.log_prior = 0
-        self.log_posterior = 0
+        self.log_var_post = 0
 
     def forward(self, input, sample=True):
-        """ For every forward pass in training, we are drawing weights (incl. bias) and return a determinstic forward mapping"""
+        """For every forward pass in training, we are drawing weights (incl. bias) from the variational posterior and return a determinstic forward mapping"""
         
         if self.training or sample:
-            # draw weights
-            w = self.weights.sample()
-            b = self.bias.sample()
+            # Draw weights from the variational posterior
+            w = self.w_var_post.sample()
+            b = self.b_var_post.sample()
 
             # Compute free energy
             self.log_prior = self.w_prior.log_prob(w).sum() + self.b_prior.log_prob(b).sum() # log P(w) in eq (2)
-            self.log_posterior = self.weights.log_prob(w).sum() + self.bias.log_prob(b).sum()  # log q(w|theta) in eq (2)
+            self.log_var_post = self.w_var_post.log_prob(w).sum() + self.b_var_post.log_prob(b).sum()  # log q(w|theta) in eq (2)
 
         else:
-            w = self.weights.mu
-            b = self.bias.mu
+            w = self.w_var_post.mu
+            b = self.b_var_post.mu
 
             self.log_prior = 0
             self.log_posterior = 0
