@@ -41,7 +41,7 @@ def run_bbb_regression():
     X_train = generate_regression_data(size=1000, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
     X_val = generate_regression_data(size=BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
 
-    train_with_tqdm(net=net, train_data=X_train, epochs=BNN_REGRESSION_PARAMETERS.epochs)
+    train_with_tqdm(net=net, train_data=X_train, eval_data=X_val, epochs=BNN_REGRESSION_PARAMETERS.epochs)
 
     mse = net.eval(X_val)
     logger.info(f'MSE: {mse}')
@@ -72,7 +72,7 @@ def run_dnn_regression():
     X_train = generate_regression_data(size=100, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
     X_val = generate_regression_data(size=DNN_REGRESSION_PARAMETERS.batch_size, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
 
-    train_with_tqdm(net=net, train_data=X_train, epochs=DNN_REGRESSION_PARAMETERS.epochs)
+    train_with_tqdm(net=net, train_data=X_train, eval_data=X_val, epochs=DNN_REGRESSION_PARAMETERS.epochs)
 
     mse = net.eval(X_val)
     logger.info(f'MSE: {mse}')

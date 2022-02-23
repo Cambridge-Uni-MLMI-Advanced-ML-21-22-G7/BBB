@@ -29,7 +29,7 @@ def train_with_tqdm(net: nn.Module, train_data: Tensor, epochs: int, eval_data: 
             loss = net.train(train_data)
 
             # Write loss to tensorboard
-            net.writer.add_scalar('training loss', loss, epoch)
+            net.writer.add_scalar('Training Loss', loss, epoch)
 
             # If you want to check the parameter values, switch log level to debug
             logger.debug(net.optimizer.param_groups)
@@ -38,17 +38,17 @@ def train_with_tqdm(net: nn.Module, train_data: Tensor, epochs: int, eval_data: 
                 net.eval(eval_data)
 
                 # Write accuracy to tensorboard
-                net.writer.add_scalar('training accuracy', net.acc, epoch)
+                net.writer.add_scalar(f'Training {net.eval_metric}', net.eval_score, epoch)
 
                 # Update tqdm progress bar
-                t_epoch.set_postfix_str(f'Loss: {loss:.5f}; Acc: {net.acc:.5f}')
+                t_epoch.set_postfix_str(f'Loss: {loss:.5f}; {net.eval_metric}: {net.eval_score:.5f}')
 
-                if not hasattr(net, 'best_acc') or net.best_acc is None:
-                    net.best_acc = net.acc
+                if not hasattr(net, 'best_eval_score') or net.eval_score is None:
+                    net.best_eval_score = net.eval_score
                 
                 # Save the latest model
-                if net.acc >= net.best_acc:
-                    net.best_acc = net.acc
+                if net.eval_score >= net.best_eval_score:
+                    net.best_eval_score = net.eval_score
                     torch.save(net.model.state_dict(), net.save_model_path)
             else:
                 t_epoch.set_postfix_str(f'Loss: {loss:.5f}')

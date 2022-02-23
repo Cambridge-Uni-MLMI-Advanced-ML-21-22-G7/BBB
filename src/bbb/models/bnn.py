@@ -11,7 +11,7 @@ from bbb.config.constants import KL_REWEIGHTING_TYPES
 from bbb.config.parameters import Parameters
 from bbb.models.base import BaseModel
 from bbb.models.layers import BFC
-from bbb.models.evaluation import ClassificationEval
+from bbb.models.evaluation import RegressionEval, ClassificationEval
 
 
 logger = logging.getLogger(__name__)
@@ -166,7 +166,7 @@ class BaseBNN(BaseModel, ABC):
         raise NotImplementedError()
 
 
-class RegressionBNN(BaseBNN):
+class RegressionBNN(RegressionEval, BaseBNN):
     def get_nll(self, outputs: torch.Tensor, targets: torch.Tensor) -> float:
         # TODO: Assuming noise with zero mean and unit variance; confirm we want this
         return -torch.distributions.Normal(outputs, 1.0).log_prob(targets).sum()
@@ -180,9 +180,6 @@ class RegressionBNN(BaseBNN):
         
         # Take the average - at some point will also want variance
         return output.mean(axis=1)
-
-    def eval(self, test_data):
-        pass
 
 class ClassificationBNN(ClassificationEval, BaseBNN):
     def forward(self, x):
