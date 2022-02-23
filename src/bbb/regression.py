@@ -53,7 +53,7 @@ def run_bbb_regression():
 
     X_train_arr = np.array(X_train.dataset)
     plt.plot(X_train_arr[:,0], X_train_arr[:,1])
-    plt.plot(X_train_arr[:,0], Y_pred, marker='x')
+    plt.plot(X_train_arr[:,0], Y_pred.detach().numpy(), marker='x')
     plt.show()
 
 

@@ -39,7 +39,7 @@ class RegressionDataset(Dataset):
         if self.seed is not None:
             torch.manual_seed(self.seed)
 
-        self.x = torch.unsqueeze(torch.linspace(-0.2, 1.2, self.size), dim=1)
+        self.x = torch.unsqueeze(torch.linspace(-0.2, 1.2, self.size, requires_grad=False), dim=1)
 
         epsilon = torch.randn(self.x.size()) * 0.02
         self.y = self.x + 0.3*torch.sin(2*np.pi*(self.x + epsilon)) + 0.3*torch.sin(4*np.pi*(self.x + epsilon)) + epsilon
