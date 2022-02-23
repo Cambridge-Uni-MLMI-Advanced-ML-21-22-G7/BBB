@@ -19,7 +19,7 @@ class RegressionDataset(Dataset):
     def __init__(
         self,
         size: int = 100,
-        seed: Union[int, None] = None
+        seed: Union[int, None] = 0
     ) -> None:
         """Creating the regression dataset used in the paper.
         Values ashere to the following equation, where ɛ~𝒩(0,0.02).
@@ -28,7 +28,7 @@ class RegressionDataset(Dataset):
 
         :param size: size of vector to generate, defaults to 100
         :type size: int, optional
-        :param seed: random seed to be used, defaults to None
+        :param seed: random seed to be used, defaults to 0
         :type seed: Union[int, None], optional
         """
         super().__init__()
@@ -39,7 +39,7 @@ class RegressionDataset(Dataset):
         if self.seed is not None:
             torch.manual_seed(self.seed)
 
-        self.x = torch.unsqueeze(torch.linspace(-0.2, 1.2, self.size), dim=1)
+        self.x = torch.unsqueeze(torch.linspace(-0.2, 1.2, self.size, requires_grad=False), dim=1)
 
         epsilon = torch.randn(self.x.size()) * 0.02
         self.y = self.x + 0.3*torch.sin(2*np.pi*(self.x + epsilon)) + 0.3*torch.sin(4*np.pi*(self.x + epsilon)) + epsilon
@@ -55,5 +55,7 @@ def generate_regression_data(size: int, batch_size: int, shuffle: bool, seed: in
         RegressionDataset(size=size),
         batch_size=batch_size, 
         shuffle=shuffle,
-        drop_last=True
+        drop_last=False,
+        pin_memory=True,
+        num_workers=8
     )

@@ -1,10 +1,10 @@
 import logging
 
-import torch
-from tqdm import tqdm 
-
-from bbb.parameters import Parameters, PriorParameters
-from bbb.models.bnn import BNN
+from bbb.utils.pytorch_setup import DEVICE
+from bbb.utils.tqdm import train_with_tqdm
+from bbb.config.constants import KL_REWEIGHTING_TYPES
+from bbb.config.parameters import Parameters, PriorParameters
+from bbb.models.bnn import ClassificationBNN
 from bbb.models.cnn import CNN
 from bbb.data import load_mnist
 
@@ -28,30 +28,17 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     epochs = 300,
     elbo_samples = 2,
     inference_samples = 10,
+    kl_reweighting_type=KL_REWEIGHTING_TYPES.simple,
 )
 
 def run_bbb_mnist_classification():
     logger.info('Beginning classification training...')
-    net = BNN(params=BBB_CLASSIFY_PARAMETERS)
+    net = ClassificationBNN(params=BBB_CLASSIFY_PARAMETERS).to(DEVICE)
 
     X_train = load_mnist(train=True, batch_size=BBB_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
     X_val = load_mnist(train=False, batch_size=BBB_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
 
-    epochs = BBB_CLASSIFY_PARAMETERS.epochs
-    for epoch in tqdm(range(epochs)):
-        net.train(X_train)
-        
-        # If you want to check the parameter values, switch log level to debug
-        logger.debug(net.optimizer.param_groups)
-        
-        net.optimizer.step()
-        net.scheduler.step()
-        net.eval(X_val)
-
-        logger.info(f'[Epoch {epoch+1}/{epochs}] - Acc: {net.acc}')
-        if net.best_acc  and net.acc > net.best_acc:
-            net.best_acc = net.acc
-            torch.save(net.model.state_dict(), net.save_model_path)
+    train_with_tqdm(net=net, train_data=X_train, epochs=BBB_CLASSIFY_PARAMETERS.epochs, eval_data=X_val)
 
     logger.info('Completed classification training...')
 
@@ -68,15 +55,12 @@ CNN_CLASSIFY_PARAMETERS = Parameters(
 
 def run_cnn_mnist_classification():
     logger.info('Beginning classification training...')
-    net = CNN(params=CNN_CLASSIFY_PARAMETERS)
+    net = CNN(params=CNN_CLASSIFY_PARAMETERS).to(DEVICE)
 
     X_train = load_mnist(train=True, batch_size=CNN_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
     X_val = load_mnist(train=False, batch_size=CNN_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
 
-    epochs = CNN_CLASSIFY_PARAMETERS.epochs
-    for epoch in tqdm(range(epochs)):
-        loss = net.train(X_train)
-        logger.info(f'[Epoch {epoch+1}/{epochs}] - Loss: {loss}')
+    train_with_tqdm(net=net, train_data=X_train, epochs=CNN_CLASSIFY_PARAMETERS.epochs, eval_data=X_val)
 
     accuracy = net.eval(X_val)
     logger.info(f'Accuracy: {accuracy}')

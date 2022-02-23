@@ -2,8 +2,8 @@ import logging
 import argparse
 from ctypes import ArgumentError
 
-from bbb.regression import run_dnn_regression
-from bbb.classify import run_bbb_mnist_classification, run_cnn_mnist_classification
+from bbb.tasks.regression import run_bbb_regression, run_dnn_regression
+from bbb.tasks.classification import run_bbb_mnist_classification, run_cnn_mnist_classification
 
 
 logger = logging.getLogger(__name__)
@@ -20,10 +20,6 @@ def init_argparse() -> argparse.ArgumentParser:
         description="Run the Bayes-by-Backprop code."
     )
     parser.add_argument(
-        "-v", "--version", action="version",
-        version = f"{parser.prog} version 1.0.0"
-    )
-    parser.add_argument(
         'model_type', choices=['reg', 'class', 'rl'],
         help='Model to run'
     )
@@ -32,6 +28,12 @@ def init_argparse() -> argparse.ArgumentParser:
         '-d',
         action='store_true',
         help='Whether to run in deterministic (i.e., non-Bayesian) mode'
+    )
+    parser.add_argument(
+        '--verbose',
+        '-v',
+        action='store_true',
+        help='Sets the log level to DEBUG'
     )
     return parser
 
@@ -45,11 +47,14 @@ def main() -> None:
     parser = init_argparse()
     args = parser.parse_args()
 
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+
     if args.model_type == 'reg':
         if args.deterministic:
             run_dnn_regression()
         else:
-            raise ArgumentError('Bayesian regression not yet implemented')
+            run_bbb_regression()
     elif args.model_type == 'class':
         if args.deterministic:
             run_cnn_mnist_classification()

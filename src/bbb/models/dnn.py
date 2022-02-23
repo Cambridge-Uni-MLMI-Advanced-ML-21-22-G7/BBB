@@ -2,12 +2,14 @@ import torch
 from torch import nn, optim
 import torch.nn.functional as F
 
-from bbb.parameters import Parameters
+from bbb.config.parameters import Parameters
+from bbb.models.base import BaseModel
+from bbb.models.evaluation import RegressionEval
 
 
-class DNN(nn.Module):
+class DNN(RegressionEval, BaseModel):
     def __init__(self, params: Parameters):
-        super().__init__()
+        super().__init__(params=params)
 
         # Parameters
         self.input_dim = params.input_dim # params.get('input_dim', "default value")
@@ -68,20 +70,6 @@ class DNN(nn.Module):
             self.optimizer.step()
             
         return loss
-
-    def eval(self, test_data):
-        self.model.eval()
-
-        n = 1
-        avg = 0
-        for x, y in test_data:
-            pred_y = self(x)
-            mse = self.criterion(pred_y, y)
-
-            avg = (1/n)*mse + ((n-1)/n)*avg
-            n += 1
-
-        return avg
 
     def predict(self, predict_data):
         self.model.eval()
