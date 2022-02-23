@@ -1,7 +1,7 @@
 from typing import List, Union
 from dataclasses import dataclass
 
-from bbb.config.constants import MODEL_SAVE_DIR
+from bbb.config.constants import MODEL_SAVE_DIR, TENSORBOARD_SAVE_DIR
 
 
 @dataclass
@@ -25,4 +25,5 @@ class Parameters:
     elbo_samples: int = None              # to draw for ELBO (training)
     inference_samples: int = None         # to draw for inference
     kl_reweighting_type: int = None       # method used for KL reweighting      
-    save_dir: str = MODEL_SAVE_DIR
+    model_save_dir: str = MODEL_SAVE_DIR
+    tensorboard_save_dir: str = TENSORBOARD_SAVE_DIR

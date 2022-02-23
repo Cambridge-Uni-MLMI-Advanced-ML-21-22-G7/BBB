@@ -22,19 +22,31 @@ def train_with_tqdm(net: nn.Module, train_data: Tensor, epochs: int, eval_data: 
     """
     with tqdm(range(epochs), unit="batch") as t_epoch:
         for epoch in t_epoch:
+            # Update the tqdm toolbar
             t_epoch.set_description(f"Epoch {epoch}")
+
+            # Run a training step
             loss = net.train(train_data)
+
+            # Write loss to tensorboard
+            net.writer.add_scalar('training loss', loss, epoch)
 
             # If you want to check the parameter values, switch log level to debug
             logger.debug(net.optimizer.param_groups)
 
             if eval_data is not None:
                 net.eval(eval_data)
+
+                # Write accuracy to tensorboard
+                net.writer.add_scalar('training accuracy', net.acc, epoch)
+
+                # Update tqdm progress bar
                 t_epoch.set_postfix_str(f'Loss: {loss:.5f}; Acc: {net.acc:.5f}')
 
                 if not hasattr(net, 'best_acc') or net.best_acc is None:
                     net.best_acc = net.acc
                 
+                # Save the latest model
                 if net.acc >= net.best_acc:
                     net.best_acc = net.acc
                     torch.save(net.model.state_dict(), net.save_model_path)

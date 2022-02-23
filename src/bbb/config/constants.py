@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 MODEL_SAVE_DIR = './saved_models'
+TENSORBOARD_SAVE_DIR = './tensorboard'
 
 @dataclass
 class _KlReweightingTypes:
