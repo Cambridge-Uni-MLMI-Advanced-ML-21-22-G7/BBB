@@ -1,5 +1,6 @@
 import logging
 
+from bbb.utils.pytorch_setup import DEVICE
 from bbb.utils.tqdm import train_with_tqdm
 from bbb.config.constants import KL_REWEIGHTING_TYPES
 from bbb.config.parameters import Parameters, PriorParameters
@@ -32,7 +33,7 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
 
 def run_bbb_mnist_classification():
     logger.info('Beginning classification training...')
-    net = ClassificationBNN(params=BBB_CLASSIFY_PARAMETERS)
+    net = ClassificationBNN(params=BBB_CLASSIFY_PARAMETERS).to(DEVICE)
 
     X_train = load_mnist(train=True, batch_size=BBB_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
     X_val = load_mnist(train=False, batch_size=BBB_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
@@ -54,7 +55,7 @@ CNN_CLASSIFY_PARAMETERS = Parameters(
 
 def run_cnn_mnist_classification():
     logger.info('Beginning classification training...')
-    net = CNN(params=CNN_CLASSIFY_PARAMETERS)
+    net = CNN(params=CNN_CLASSIFY_PARAMETERS).to(DEVICE)
 
     X_train = load_mnist(train=True, batch_size=CNN_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
     X_val = load_mnist(train=False, batch_size=CNN_CLASSIFY_PARAMETERS.batch_size, shuffle=True)

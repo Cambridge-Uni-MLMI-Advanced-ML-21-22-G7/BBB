@@ -67,7 +67,7 @@ DNN_REGRESSION_PARAMETERS = Parameters(
 
 def run_dnn_regression():
     logger.info('Beginning regression training...')
-    net = DNN(params=DNN_REGRESSION_PARAMETERS)
+    net = DNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
 
     X_train = generate_regression_data(size=100, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
     X_val = generate_regression_data(size=DNN_REGRESSION_PARAMETERS.batch_size, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
