@@ -1,15 +1,15 @@
 import logging
 
 import numpy as np
-from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-from bbb.pytorch_setup import DEVICE
-from bbb.constants import KL_REWEIGHTING_TYPES
-from bbb.parameters import Parameters, PriorParameters
+from bbb.utils.pytorch_setup import DEVICE
+from bbb.utils.tqdm import train_with_tqdm
+from bbb.config.constants import KL_REWEIGHTING_TYPES
+from bbb.config.parameters import Parameters, PriorParameters
 from bbb.models.dnn import DNN
 from bbb.models.bnn import RegressionBNN
-from bbb.data import generate_regression_data, RegressionDataset
+from bbb.data import generate_regression_data
 
 
 logger = logging.getLogger(__name__)
@@ -41,10 +41,7 @@ def run_bbb_regression():
     X_train = generate_regression_data(size=1000, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
     X_val = generate_regression_data(size=BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
 
-    epochs = BNN_REGRESSION_PARAMETERS.epochs
-    for epoch in tqdm(range(epochs)):
-        loss = net.train(X_train)
-        logger.info(f'[Epoch {epoch+1}/{epochs}] - Loss: {loss}')
+    train_with_tqdm(net=net, train_data=X_train, epochs=BNN_REGRESSION_PARAMETERS.epochs)
 
     mse = net.eval(X_val)
     logger.info(f'MSE: {mse}')
@@ -75,10 +72,7 @@ def run_dnn_regression():
     X_train = generate_regression_data(size=100, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
     X_val = generate_regression_data(size=DNN_REGRESSION_PARAMETERS.batch_size, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
 
-    epochs = DNN_REGRESSION_PARAMETERS.epochs
-    for epoch in tqdm(range(epochs)):
-        loss = net.train(X_train)
-        logger.info(f'[Epoch {epoch+1}/{epochs}] - Loss: {loss}')
+    train_with_tqdm(net=net, train_data=X_train, epochs=DNN_REGRESSION_PARAMETERS.epochs)
 
     mse = net.eval(X_val)
     logger.info(f'MSE: {mse}')
@@ -89,8 +83,3 @@ def run_dnn_regression():
     plt.plot(X_train_arr[:,0], X_train_arr[:,1])
     plt.plot(X_train_arr[:,0], Y_pred.detach().numpy(), marker='x')
     plt.show()
-
-if __name__ == '__main__':
-    logger.info('Beginning execution...')
-    run_dnn_regression()
-    logger.info('Completed execution')

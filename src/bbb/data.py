@@ -55,5 +55,7 @@ def generate_regression_data(size: int, batch_size: int, shuffle: bool, seed: in
         RegressionDataset(size=size),
         batch_size=batch_size, 
         shuffle=shuffle,
-        drop_last=True
+        drop_last=False,
+        pin_memory=True,
+        num_workers=8
     )
