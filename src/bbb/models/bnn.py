@@ -1,23 +1,26 @@
 import os
 import logging
 from abc import ABC, abstractmethod
-from bbb.pytorch_setup import DEVICE
 
 import torch
 from torch import nn, optim
 import torch.nn.functional as F
-from tqdm import tqdm 
 
-from bbb.constants import KL_REWEIGHTING_TYPES
-from bbb.parameters import Parameters
-from bbb.layers import BFC
+from bbb.utils.pytorch_setup import DEVICE
+from bbb.config.constants import KL_REWEIGHTING_TYPES
+from bbb.config.parameters import Parameters
+from bbb.models.base import BaseModel
+from bbb.models.layers import BFC
+from bbb.models.evaluation import ClassificationEval
+
 
 logger = logging.getLogger(__name__)
 
-class BaseBNN(nn.Module, ABC):
+
+class BaseBNN(BaseModel, ABC):
     """ Bayesian (Weights) Neural Network """
     def __init__(self, params: Parameters) -> None:
-        super().__init__()
+        super().__init__(params=params)
 
         # Parameters
         self.input_dim = params.input_dim
@@ -31,13 +34,6 @@ class BaseBNN(nn.Module, ABC):
         self.batch_size = params.batch_size
         self.lr = params.lr
         self.kl_reweighting_type = params.kl_reweighting_type
-
-        # Save Model
-        self.name = params.name
-        self.best_acc = None
-        self.model_path = os.path.join(params.save_dir, f'{params.name}_model.pt')
-        if not os.path.exists(params.save_dir):
-            os.makedirs(params.save_dir)
 
         # Model
         self.model = nn.Sequential(
@@ -188,7 +184,7 @@ class RegressionBNN(BaseBNN):
     def eval(self, test_data):
         pass
 
-class ClassificationBNN(BaseBNN):
+class ClassificationBNN(ClassificationEval, BaseBNN):
     def forward(self, x):
         x = x.view(-1, self.input_dim)
         return super().forward(x)
@@ -214,19 +210,3 @@ class ClassificationBNN(BaseBNN):
         preds = torch.argmax(probs, dim=1)
         
         return preds, probs
-    
-    def eval(self, test_data):
-        self.model.eval()
-        correct = 0
-        total = 0
-
-        with torch.no_grad():
-            for data in tqdm(test_data):
-                X, y = data
-                preds, _ = self.predict(X)
-                total += self.batch_size
-                correct += (preds == y).sum().item()
-        
-        self.acc = correct / total
-        if self.best_acc == None: self.best_acc = self.acc
-        # logger.info(f'{self.name} validation accuracy: {self.acc}')

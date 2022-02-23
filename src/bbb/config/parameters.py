@@ -1,7 +1,7 @@
 from typing import List, Union
 from dataclasses import dataclass
 
-from bbb.constants import MODEL_SAVE_DIR
+from bbb.config.constants import MODEL_SAVE_DIR
 
 
 @dataclass

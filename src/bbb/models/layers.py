@@ -3,7 +3,7 @@ import torch
 from torch import nn, distributions
 from torch.nn import Parameter
 
-from bbb.pytorch_setup import DEVICE
+from bbb.utils.pytorch_setup import DEVICE
 
 
 class GaussianVarPost(nn.Module):
@@ -29,7 +29,7 @@ class GaussianVarPost(nn.Module):
         # TODO: Observed that the below does not seem to train nearly as well on the
         # regression dataset. Needs further analysis.
         # return torch.log1p(1+torch.exp(self.rho))  # section 3.2
-        return self.rho
+        return torch.log1p(torch.exp(self.rho))
 
     def sample(self):
         epsilon = distributions.Normal(0,1).sample(self.rho.size()).to(DEVICE)
@@ -39,6 +39,7 @@ class GaussianVarPost(nn.Module):
     def log_prob(self, value):
         log_prob = distributions.Normal(loc=self.mu, scale=self.sigma).log_prob(value)
         return log_prob
+
 
 class BFC(nn.Module):
     """Bayesian (Weights) Fully Connected Layer"""

@@ -1,13 +1,12 @@
-import torch
 from torch import nn, optim
-import torch.nn.functional as F
 
-from bbb.parameters import Parameters
+from bbb.config.parameters import Parameters
+from bbb.models.base import BaseModel
+from bbb.models.evaluation import ClassificationEval
 
-
-class CNN(nn.Module):
+class CNN(ClassificationEval, BaseModel):
     def __init__(self, params: Parameters):
-        super().__init__()
+        super().__init__(params=params)
 
         # Parameters
         self.input_dim = params.input_dim # params.get('input_dim', "default value")
@@ -45,7 +44,6 @@ class CNN(nn.Module):
             lr=self.lr
         )
 
-
     def forward(self, x):
         return self.model.forward(x)
 
@@ -61,13 +59,3 @@ class CNN(nn.Module):
             self.optimizer.step()
             
         return loss
-
-    def eval(self, test_data):
-        self.model.eval()
-
-        for inputs, labels in test_data:
-            test_output = self(inputs)
-            pred_y = torch.max(test_output, 1).indices
-            accuracy = (pred_y == labels).sum().item() / float(labels.size(0))
-
-        return accuracy

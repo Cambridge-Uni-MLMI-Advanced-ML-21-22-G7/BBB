@@ -2,12 +2,13 @@ import torch
 from torch import nn, optim
 import torch.nn.functional as F
 
-from bbb.parameters import Parameters
+from bbb.config.parameters import Parameters
+from bbb.models.base import BaseModel
 
 
-class DNN(nn.Module):
+class DNN(BaseModel):
     def __init__(self, params: Parameters):
-        super().__init__()
+        super().__init__(params=params)
 
         # Parameters
         self.input_dim = params.input_dim # params.get('input_dim', "default value")
