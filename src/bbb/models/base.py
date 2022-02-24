@@ -30,6 +30,10 @@ class BaseModel(torch.nn.Module):
             os.makedirs(params.tensorboard_save_dir)
         self.writer = SummaryWriter(self.save_tensorboard_path)
 
+        # Early stopping criteria
+        self.early_stopping = params.early_stopping
+        self.early_stopping_thresh = params.early_stopping_thresh
+
     def load_saved(self):
         """Load a saved model.
 
