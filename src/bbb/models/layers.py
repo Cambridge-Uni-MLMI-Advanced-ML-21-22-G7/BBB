@@ -1,13 +1,13 @@
-import numpy as np
 import torch
 from torch import nn, distributions
 from torch.nn import Parameter
 
 from bbb.utils.pytorch_setup import DEVICE
-
+from bbb.config.constants import VP_VARIANCE_TYPES
+from bbb.config.parameters import PriorParameters
 
 class GaussianVarPost(nn.Module):
-    def __init__(self, mu, rho, dim_in=None, dim_out=None) -> None:
+    def __init__(self, mu: float, rho: float, vp_var_type: int, dim_in: int = None, dim_out: int = None) -> None:
         super().__init__()
 
         if dim_in == None: # bias tensor
@@ -23,13 +23,16 @@ class GaussianVarPost(nn.Module):
 
         self.mu = Parameter(mu_tensor)
         self.rho = Parameter(rho_tensor)
+        self.vp_var_type = vp_var_type
 
     @property
     def sigma(self):
-        # TODO: Observed that the below does not seem to train nearly as well on the
-        # regression dataset. Needs further analysis.
-        # return torch.log1p(1+torch.exp(self.rho))  # section 3.2
-        return torch.log1p(torch.exp(self.rho))
+        if self.vp_var_type == VP_VARIANCE_TYPES.paper:
+            return torch.log1p(1+torch.exp(self.rho))  # section 3.2
+        elif self.vp_var_type == VP_VARIANCE_TYPES.simple:
+            return torch.log1p(torch.exp(self.rho))
+        else:
+            raise RuntimeError(f'Unrecognised variational posterior variance type: {self.vp_var_type}')
 
     def sample(self):
         epsilon = distributions.Normal(0,1).sample(self.rho.size()).to(DEVICE)
@@ -44,13 +47,13 @@ class GaussianVarPost(nn.Module):
 class BFC(nn.Module):
     """Bayesian (Weights) Fully Connected Layer"""
     
-    def __init__(self, dim_in, dim_out, weight_mu, weight_rho, prior_params):
+    def __init__(self, dim_in: int, dim_out: int, weight_mu: float, weight_rho: float, prior_params: PriorParameters, vp_var_type: int):
         super().__init__()
         
         # Create IN X OUT weight tensor that we can sample from
         # This is the variational posterior over the weights
-        self.w_var_post = GaussianVarPost(weight_mu, weight_rho, dim_in=dim_in, dim_out=dim_out)
-        self.b_var_post = GaussianVarPost(weight_mu, weight_rho, dim_out=dim_out)
+        self.w_var_post = GaussianVarPost(weight_mu, weight_rho, dim_in=dim_in, dim_out=dim_out, vp_var_type=vp_var_type)
+        self.b_var_post = GaussianVarPost(weight_mu, weight_rho, dim_out=dim_out, vp_var_type=vp_var_type)
 
         # Set Prior distribution over the weights
         assert prior_params.w_sigma and prior_params.b_sigma  # Assert that the required prior parameters are present

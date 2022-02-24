@@ -2,7 +2,7 @@ import logging
 
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.utils.tqdm import train_with_tqdm
-from bbb.config.constants import KL_REWEIGHTING_TYPES
+from bbb.config.constants import KL_REWEIGHTING_TYPES, VP_VARIANCE_TYPES
 from bbb.config.parameters import Parameters, PriorParameters
 from bbb.models.bnn import ClassificationBNN
 from bbb.models.cnn import CNN
@@ -21,6 +21,7 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     input_dim = 28*28,
     output_dim = 10,
     hidden_units = 1200,
+    hidden_layers=3,
     weight_mu = [-0.2, 0.2],
     weight_rho = [-5, -4],
     prior_params = PriorParameters(
@@ -33,6 +34,7 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     elbo_samples = 2,
     inference_samples = 10,
     kl_reweighting_type=KL_REWEIGHTING_TYPES.simple,
+    vp_variance_type=VP_VARIANCE_TYPES.simple
 )
 
 def run_bbb_mnist_classification_training():

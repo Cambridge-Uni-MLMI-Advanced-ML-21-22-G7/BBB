@@ -44,6 +44,8 @@ def train_with_tqdm(net: nn.Module, train_data: Tensor, epochs: int, eval_data: 
 
                 # Update tqdm progress bar
                 t_epoch.set_postfix_str(f'Loss: {loss:.5f}, {net.eval_metric}: {net.eval_score:.5f}')
+            else:
+                t_epoch.set_postfix_str(f'Loss: {loss:.5f}')
 
             if not hasattr(net, 'best_loss') or net.best_loss is None:
                 net.best_loss = loss
@@ -52,5 +54,3 @@ def train_with_tqdm(net: nn.Module, train_data: Tensor, epochs: int, eval_data: 
             if loss <= net.best_loss:
                 net.best_loss = loss
                 torch.save(net.model.state_dict(), net.save_model_path)
-            else:
-                t_epoch.set_postfix_str(f'Loss: {loss:.5f}')

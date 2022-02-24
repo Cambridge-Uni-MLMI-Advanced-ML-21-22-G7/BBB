@@ -7,7 +7,7 @@ from torch import nn
 
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.utils.tqdm import train_with_tqdm
-from bbb.config.constants import KL_REWEIGHTING_TYPES
+from bbb.config.constants import KL_REWEIGHTING_TYPES, VP_VARIANCE_TYPES
 from bbb.config.parameters import Parameters, PriorParameters
 from bbb.models.dnn import DNN
 from bbb.models.bnn import RegressionBNN
@@ -50,12 +50,14 @@ BNN_REGRESSION_PARAMETERS = Parameters(
         b_sigma=2,
     ),
     hidden_units = 400,
+    hidden_layers=3,
     batch_size = 100,
     lr = 1e-3,
     epochs = 1000,
     elbo_samples = 5,
     inference_samples = 10,
     kl_reweighting_type=KL_REWEIGHTING_TYPES.simple,
+    vp_variance_type=VP_VARIANCE_TYPES.simple
 )
 
 def run_bbb_regression_training():

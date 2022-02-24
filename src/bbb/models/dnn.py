@@ -29,24 +29,23 @@ class DNN(RegressionEval, BaseModel):
         self.lr = params.lr
 
         # Model
-        self.model = nn.Sequential( 
-            nn.Linear(
-                in_features=self.input_dim,
-                out_features=self.hidden_units
-            ),
-            nn.ReLU(),
-            *[
-                nn.Linear(
+        model_layers = []
+        model_layers.append(nn.Linear(
+            in_features=self.input_dim,
+            out_features=self.hidden_units
+        ))
+        model_layers.append(nn.ReLU())
+        for _ in range(self.hidden_layers-2):
+            model_layers.append(nn.Linear(
                     in_features=self.hidden_units,
                     out_features=self.hidden_units
-                ),
-                nn.ReLU(),
-            ]*self.hidden_layers,
-            nn.Linear(
-                in_features=self.hidden_units,
-                out_features=self.output_dim
-            ),
-        )
+                ))
+            model_layers.append(nn.ReLU())
+        model_layers.append(nn.Linear(
+            in_features=self.hidden_units,
+            out_features=self.output_dim
+        ))
+        self.model = nn.Sequential(*model_layers)
 
         # Criterion
         self.criterion = nn.MSELoss()
