@@ -5,6 +5,8 @@ import torch
 
 logger = logging.getLogger(__name__)
 
+
+# Determine if a CUDA enabled GPU is present; use it if it is
 if torch.cuda.is_available():
     logger.debug('CUDA available - PyTorch will use GPU')
     dev = 'cuda:0'
@@ -13,5 +15,5 @@ else:
     dev = 'cpu'
 DEVICE = torch.device(dev)
 
-# Switch this on to find where issues are occurring
+# Uncomment the below to find where gradient backpropagation issues are occurring
 # torch.autograd.set_detect_anomaly(True)

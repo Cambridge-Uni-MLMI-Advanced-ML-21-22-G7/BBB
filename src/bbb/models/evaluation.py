@@ -1,16 +1,22 @@
 import torch
-import torch.nn.functional as F
+from torch.utils.data import DataLoader
 
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.config.parameters import Parameters
 
 
 class RegressionEval:
+    # Evaluation method for regression tasks.
+    # Should be the first class inherited by all regression models.
 
+    # This will be shown in the tqdm progress bar
+    # and in Tensorboard.
     eval_metric = 'RMSE'
 
-    def eval(self, test_data):
+    def eval(self, test_data: DataLoader) -> float:
+        # Put model in evaluation mode
         self.model.eval()
+
         running_err = 0
         total = 0
 
@@ -28,11 +34,17 @@ class RegressionEval:
         return self.eval_score
 
 class ClassificationEval:
+    # Evaluation method for classification tasks.
+    # Should be the first class inherited by all classification models.
 
+    # This will be shown in the tqdm progress bar
+    # and in Tensorboard.
     eval_metric = 'Acc'
 
-    def eval(self, test_data):
+    def eval(self, test_data: DataLoader) -> float:
+        # Put model in evaluation mode
         self.model.eval()
+
         correct = 0
         total = 0
 
