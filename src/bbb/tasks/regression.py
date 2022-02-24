@@ -48,9 +48,9 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     hidden_units = 400,
     batch_size = 100,
     lr = 1e-3,
-    epochs = 20,
+    epochs = 1000,
     elbo_samples = 5,
-    inference_samples = 25,
+    inference_samples = 10,
     kl_reweighting_type=KL_REWEIGHTING_TYPES.simple,
 )
 
@@ -97,7 +97,7 @@ DNN_REGRESSION_PARAMETERS = Parameters(
     hidden_units = 50,
     batch_size = 10,
     lr = 0.01,
-    epochs = 10,
+    epochs = 100,
 )
 
 def run_dnn_regression_training():
