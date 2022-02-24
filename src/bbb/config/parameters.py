@@ -33,6 +33,7 @@ class Parameters:
     elbo_samples: int = None              # to draw for ELBO (training)
     inference_samples: int = None         # to draw for inference
     kl_reweighting_type: int = None       # method used for KL reweighting
+    vp_variance_type: int = None          # type of variational posterior variance used
 
     # These parameters are unlikely to need to
     # be changed from their defaults

@@ -13,3 +13,14 @@ class _KlReweightingTypes:
     simple: int = 0
     paper: int = 1
 KL_REWEIGHTING_TYPES = _KlReweightingTypes()
+
+@dataclass
+class _VariationalPosteriorVarianceTypes:
+    """Relates to section 3.2 of the paper which sets
+    sigma = log(1+exp(rho)).
+
+    The simple option sets the variance to simply rho.
+    """
+    simple: int = 0
+    paper: int = 1
+VP_VARIANCE_TYPES = _KlReweightingTypes()

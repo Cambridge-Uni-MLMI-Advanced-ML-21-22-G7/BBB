@@ -30,6 +30,7 @@ class BaseBNN(BaseModel, ABC):
         # Parameters
         self.input_dim = params.input_dim
         self.hidden_units = params.hidden_units
+        self.hidden_layers = params.hidden_layers
         self.output_dim = params.output_dim
         self.weight_mu = params.weight_mu
         self.weight_rho = params.weight_rho
@@ -39,15 +40,37 @@ class BaseBNN(BaseModel, ABC):
         self.batch_size = params.batch_size
         self.lr = params.lr
         self.kl_reweighting_type = params.kl_reweighting_type
+        self.vp_variance_type = params.vp_variance_type
+
+        # BFC argument dict
+        bfc_arguments = {
+            "weight_mu": self.weight_mu,
+            "weight_rho": self.weight_rho,
+            "prior_params": self.prior_params,
+            "vp_var_type": self.vp_variance_type
+        }
 
         # Model
-        self.model = nn.Sequential(
-            BFC(self.input_dim, self.hidden_units, self.weight_mu, self.weight_rho, self.prior_params), 
-            nn.ReLU(),
-            BFC(self.hidden_units, self.hidden_units, self.weight_mu, self.weight_rho, self.prior_params),
-            nn.ReLU(),
-            BFC(self.hidden_units, self.output_dim, self.weight_mu, self.weight_rho, self.prior_params)
+        model_layers = []
+        model_layers.append(BFC(
+            dim_in=self.input_dim,
+            dim_out=self.hidden_units,
+            **bfc_arguments)
         )
+        model_layers.append(nn.ReLU())
+        for _ in range(self.hidden_layers-1):
+            model_layers.append(BFC(
+                dim_in=self.hidden_units,
+                dim_out=self.hidden_units,
+                **bfc_arguments
+            ))
+            model_layers.append(nn.ReLU())
+        model_layers.append(BFC(
+            dim_in=self.hidden_units,
+            dim_out=self.output_dim,
+            **bfc_arguments)
+        )
+        self.model = nn.Sequential(*model_layers)
 
         # Optimizer
         self.optimizer = optim.Adam(
