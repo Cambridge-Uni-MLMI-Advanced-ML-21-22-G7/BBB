@@ -21,3 +21,11 @@ class BaseModel(torch.nn.Module):
         if not os.path.exists(params.tensorboard_save_dir):
             os.makedirs(params.tensorboard_save_dir)
         self.writer = SummaryWriter(self.save_tensorboard_path)
+
+    def load_saved(self):
+        if os.path.isfile(self.save_model_path):
+            self.model.load_state_dict(torch.load(self.save_model_path))
+        else:
+            raise FileNotFoundError(
+                f'No model saved at: {self.save_model_path}'
+            )

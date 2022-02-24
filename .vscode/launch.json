@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "BBB Regression",
+            "name": "BBB Reg Training",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/src/bbb/cli.py",
@@ -13,12 +13,60 @@
             "args": ["reg"]
         },
         {
-            "name": "Det Regression",
+            "name": "BBB Reg Evaluation",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/bbb/cli.py",
+            "console": "integratedTerminal",
+            "args": ["reg", "-e"]
+        },
+        {
+            "name": "Det Regression Training",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/src/bbb/cli.py",
             "console": "integratedTerminal",
             "args": ["reg", "-d"]
+        },
+        {
+            "name": "Det Regression Evaluation",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/bbb/cli.py",
+            "console": "integratedTerminal",
+            "args": ["reg", "-d", "-e"]
+        },
+        {
+            "name": "BBB Classification Training",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/bbb/cli.py",
+            "console": "integratedTerminal",
+            "args": ["class"]
+        },
+        {
+            "name": "BBB Classification Evaluation",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/bbb/cli.py",
+            "console": "integratedTerminal",
+            "args": ["class", "-e"]
+        },
+        {
+            "name": "Det Classification Training",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/bbb/cli.py",
+            "console": "integratedTerminal",
+            "args": ["class", "-d"]
+        },
+        {
+            "name": "Det Classification Evaluation",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/bbb/cli.py",
+            "console": "integratedTerminal",
+            "args": ["class", "-d", "-e"]
         }
     ]
 }

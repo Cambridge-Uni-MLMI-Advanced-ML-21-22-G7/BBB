@@ -2,8 +2,12 @@ import logging
 import argparse
 from ctypes import ArgumentError
 
-from bbb.tasks.regression import run_bbb_regression, run_dnn_regression
-from bbb.tasks.classification import run_bbb_mnist_classification, run_cnn_mnist_classification
+from bbb.tasks.regression import (
+    run_bbb_regression_training, run_bbb_regression_evaluation, run_dnn_regression_training, run_dnn_regression_evaluation
+)
+from bbb.tasks.classification import (
+    run_bbb_mnist_classification_training, run_cnn_mnist_classification_training
+)
 
 
 logger = logging.getLogger(__name__)
@@ -30,6 +34,12 @@ def init_argparse() -> argparse.ArgumentParser:
         help='Whether to run in deterministic (i.e., non-Bayesian) mode'
     )
     parser.add_argument(
+        '--evaluate',
+        '-e',
+        action='store_true',
+        help='Run evaluation only, using the latest saved model'
+    )
+    parser.add_argument(
         '--verbose',
         '-v',
         action='store_true',
@@ -52,14 +62,26 @@ def main() -> None:
 
     if args.model_type == 'reg':
         if args.deterministic:
-            run_dnn_regression()
+            if args.evaluate:
+                run_dnn_regression_evaluation()
+            else:
+                run_dnn_regression_training()
         else:
-            run_bbb_regression()
+            if args.evaluate:
+                run_bbb_regression_evaluation()
+            else:
+                run_bbb_regression_training()
     elif args.model_type == 'class':
         if args.deterministic:
-            run_cnn_mnist_classification()
+            if args.evaluate:
+                raise ArgumentError('Method not yet implemented')
+            else:
+                run_cnn_mnist_classification_training()
         else:
-            run_bbb_mnist_classification()
+            if args.evaluate:
+                raise ArgumentError('Method not yet implemented')
+            else:
+                run_bbb_mnist_classification_training()
     elif args.model_type == 'rl':
         raise ArgumentError('Reinforcement learning not yet implemented')
     else:

@@ -50,7 +50,8 @@ class DNN(RegressionEval, BaseModel):
 
         # Scheduler
         self.scheduler = optim.lr_scheduler.StepLR(
-            self.optimizer,step_size=100,
+            self.optimizer,
+            step_size=100,
             gamma=0.5
         )
 
@@ -73,4 +74,10 @@ class DNN(RegressionEval, BaseModel):
 
     def predict(self, predict_data):
         self.model.eval()
-        return self(predict_data)
+
+        # Make predictions
+        preds = self(predict_data)
+
+        # Return tuple with preds and None
+        # BBB methods return mean and variance of samples NNs
+        return preds, None

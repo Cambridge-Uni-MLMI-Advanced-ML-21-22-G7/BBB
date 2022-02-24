@@ -19,12 +19,13 @@ class RegressionEval:
                 X = X.to(DEVICE)
                 Y = Y.to(DEVICE)
 
-                pred_Y = self(X)
+                pred_Y, _ = self.predict(X)
 
                 total += self.batch_size
                 running_err += ((pred_Y - Y)*(pred_Y - Y)).sum().data
 
         self.eval_score = torch.sqrt(running_err/total)
+        return self.eval_score
 
 class ClassificationEval:
 
@@ -40,9 +41,10 @@ class ClassificationEval:
                 inputs = inputs.to(DEVICE)
                 labels = labels.to(DEVICE)
 
-                preds = self(inputs)
+                preds, probs = self.predict(inputs)
 
                 total += self.batch_size
                 correct += (labels == preds).sum().item()
 
         self.eval_score = correct / total
+        return self.eval_score
