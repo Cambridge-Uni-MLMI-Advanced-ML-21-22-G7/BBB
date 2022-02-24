@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 from torch import nn
+from torch.utils.data import DataLoader
 
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.utils.tqdm import train_with_tqdm
@@ -21,20 +22,23 @@ logger = logging.getLogger(__name__)
 # BBB Methods
 #############
 
-def _bbb_regression_evaluation(net: nn.Module):
-    X_train = generate_regression_data(size=1000, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
-    X_val = generate_regression_data(size=BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
+def _bbb_regression_evaluation(net: nn.Module, X_train: DataLoader = None, X_val: DataLoader = None):
+    if X_train is None or X_val is None:
+        X_train = generate_regression_data(train=True, size=10*BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
+        X_val = generate_regression_data(train=False, size=BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
 
     rmse = net.eval(X_val)
     logger.info(f'RMSE: {rmse}')
 
     X_train_arr = np.array(X_train.dataset, dtype=float)
-    Y_train_pred_mean, Y_train_pred_var = net.predict(X_train.dataset[:][0])
-    Y_train_pred_mean, Y_train_pred_std = Y_train_pred_mean.detach().numpy().flatten(), torch.sqrt(Y_train_pred_var).detach().numpy().flatten()
+    X_val_arr = np.array(X_val.dataset, dtype=float)
+
+    Y_val_pred_mean, Y_val_pred_var = net.predict(X_val.dataset[:][0])
+    Y_val_pred_mean, Y_val_pred_var = Y_val_pred_mean.detach().numpy().flatten(), torch.sqrt(Y_val_pred_var).detach().numpy().flatten()
     
     plt.plot(X_train_arr[:,0], X_train_arr[:,1], label='Original')
-    plt.plot(X_train_arr[:,0], Y_train_pred_mean, marker='x', label='Prediction')
-    plt.fill_between(X_train_arr[:,0], Y_train_pred_mean-2*Y_train_pred_std, Y_train_pred_mean+2*Y_train_pred_std, alpha=0.5)
+    plt.plot(X_val_arr[:,0], Y_val_pred_mean, marker='x', label='Prediction')
+    plt.fill_between(X_val_arr[:,0], Y_val_pred_mean-2*Y_val_pred_var, Y_val_pred_mean+2*Y_val_pred_var, alpha=0.5)
     plt.legend()
     plt.show()
 
@@ -53,7 +57,7 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     hidden_layers=3,
     batch_size = 100,
     lr = 1e-3,
-    epochs = 1000,
+    epochs = 100,
     elbo_samples = 5,
     inference_samples = 10,
     kl_reweighting_type=KL_REWEIGHTING_TYPES.simple,
@@ -64,12 +68,12 @@ def run_bbb_regression_training():
     logger.info('Beginning regression training...')
     net = RegressionBNN(params=BNN_REGRESSION_PARAMETERS).to(DEVICE)
 
-    X_train = generate_regression_data(size=1000, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
-    X_val = generate_regression_data(size=BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
+    X_train = generate_regression_data(train=True, size=10*BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
+    X_val = generate_regression_data(train=False, size=BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
 
     train_with_tqdm(net=net, train_data=X_train, eval_data=X_val, epochs=BNN_REGRESSION_PARAMETERS.epochs)
 
-    _bbb_regression_evaluation(net)
+    _bbb_regression_evaluation(net, X_train=X_train, X_val=X_val)
 
 
 def run_bbb_regression_evaluation():
@@ -83,19 +87,23 @@ def run_bbb_regression_evaluation():
 # DNN Methods
 #############
 
-def _dnn_regression_evaluation(net: nn.Module):
-    X_train = generate_regression_data(size=1000, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
-    X_val = generate_regression_data(size=BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
+def _dnn_regression_evaluation(net: nn.Module, X_train: DataLoader = None, X_val: DataLoader = None):
+    if X_train is None or X_val is None:
+        X_train = generate_regression_data(train=True, size=10*BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
+        X_val = generate_regression_data(train=False, size=BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
 
     rmse = net.eval(X_val)
     logger.info(f'RMSE: {rmse}')
 
     X_train_arr = np.array(X_train.dataset, dtype=float)
-    Y_train_pred, _ = net.predict(X_train.dataset[:][0])
-    Y_train_pred = Y_train_pred.detach().numpy().flatten()
+    X_val_arr = np.array(X_val.dataset, dtype=float)
+
+    Y_val_pred, _ = net.predict(X_val.dataset[:][0])
+    Y_val_pred = Y_val_pred.detach().numpy().flatten()
     
     plt.plot(X_train_arr[:,0], X_train_arr[:,1], label='Original')
-    plt.plot(X_train_arr[:,0], Y_train_pred, marker='x', label='Prediction')
+    plt.plot(X_val_arr[:,0], Y_val_pred, marker='x', label='Prediction')
+    plt.xlim(-0.2, 1.4)
     plt.legend()
     plt.show()
 
@@ -105,7 +113,7 @@ DNN_REGRESSION_PARAMETERS = Parameters(
     output_dim = 1,
     hidden_layers = 3,
     hidden_units = 50,
-    batch_size = 10,
+    batch_size = 100,
     lr = 0.01,
     epochs = 100,
     early_stopping=True,
@@ -116,12 +124,12 @@ def run_dnn_regression_training():
     logger.info('Beginning regression training...')
     net = DNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
 
-    X_train = generate_regression_data(size=100, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
-    X_val = generate_regression_data(size=DNN_REGRESSION_PARAMETERS.batch_size, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
+    X_train = generate_regression_data(train=True, size=10*BNN_REGRESSION_PARAMETERS.batch_size, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
+    X_val = generate_regression_data(train=False, size=DNN_REGRESSION_PARAMETERS.batch_size, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
 
     train_with_tqdm(net=net, train_data=X_train, eval_data=X_val, epochs=DNN_REGRESSION_PARAMETERS.epochs)
 
-    _dnn_regression_evaluation(net)
+    _dnn_regression_evaluation(net, X_train=X_train, X_val=X_val)
 
 
 def run_dnn_regression_evaluation():
