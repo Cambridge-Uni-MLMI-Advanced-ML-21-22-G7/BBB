@@ -1,6 +1,7 @@
 import logging
 from tqdm import tqdm
 
+import numpy as np
 import torch
 from torch import nn, Tensor
 
@@ -23,7 +24,10 @@ def train_with_tqdm(net: nn.Module, train_data: Tensor, epochs: int, eval_data: 
     :type eval_data: Tensor, optional
     """
     with tqdm(range(epochs), unit="batch") as t_epoch:
-        for epoch in t_epoch:
+        # Initialise previous loss
+        prev_loss = np.inf
+
+        for e_num, epoch in enumerate(t_epoch):
             # Update the tqdm toolbar
             t_epoch.set_description(f"Epoch {epoch}")
 
@@ -54,3 +58,10 @@ def train_with_tqdm(net: nn.Module, train_data: Tensor, epochs: int, eval_data: 
             if loss <= net.best_loss:
                 net.best_loss = loss
                 torch.save(net.model.state_dict(), net.save_model_path)
+
+                # Early stopping, if conditions are met
+                # NOTE: this is intentionally inside the model saving loop; only early stop
+                # if a model has just been saved.
+                if net.early_stopping and np.abs(loss.item() - prev_loss) < net.early_stopping_thresh:
+                    logger.warn(f'Early stopping at epoch {e_num+1} as the absolute loss difference between the previous run and the current was less than {net.early_stopping_thresh}')
+                    break

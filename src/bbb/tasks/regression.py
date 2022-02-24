@@ -108,6 +108,8 @@ DNN_REGRESSION_PARAMETERS = Parameters(
     batch_size = 10,
     lr = 0.01,
     epochs = 100,
+    early_stopping=True,
+    early_stopping_thresh=1e-4
 )
 
 def run_dnn_regression_training():

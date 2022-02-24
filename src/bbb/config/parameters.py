@@ -35,6 +35,11 @@ class Parameters:
     kl_reweighting_type: int = None       # method used for KL reweighting
     vp_variance_type: int = None          # type of variational posterior variance used
 
+    # Early stopping parameters
+    # By default, do not early stop
+    early_stopping: bool = False
+    early_stopping_thresh: float = 0
+
     # These parameters are unlikely to need to
     # be changed from their defaults
     model_save_dir: str = MODEL_SAVE_DIR
