@@ -12,6 +12,10 @@ from bbb.data import load_mnist
 logger = logging.getLogger(__name__)
 
 
+#############
+# BBB Methods
+#############
+
 BBB_CLASSIFY_PARAMETERS = Parameters(
     name = "BBB_classification",
     input_dim = 28*28,
@@ -42,6 +46,10 @@ def run_bbb_mnist_classification_training():
 
     logger.info('Completed classification training...')
 
+
+#############
+# CNN Methods
+#############
 
 CNN_CLASSIFY_PARAMETERS = Parameters(
     name = "CNN_classification",

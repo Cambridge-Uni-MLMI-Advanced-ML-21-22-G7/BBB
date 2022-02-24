@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 def train_with_tqdm(net: nn.Module, train_data: Tensor, epochs: int, eval_data: Tensor = None):
     """Wrapper for training models that will print the progress with tqdm nicely.
 
+    This function will also save the latest model, and metrics for display in Tensorboard.
+
     :param net: network to be trained
     :type net: nn.Module
     :param train_data: training data

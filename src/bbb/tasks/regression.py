@@ -17,6 +17,10 @@ from bbb.data import generate_regression_data
 logger = logging.getLogger(__name__)
 
 
+#############
+# BBB Methods
+#############
+
 def _bbb_regression_evaluation(net: nn.Module):
     X_train = generate_regression_data(size=1000, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
     X_val = generate_regression_data(size=BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
@@ -72,6 +76,10 @@ def run_bbb_regression_evaluation():
     net.load_saved()
     _bbb_regression_evaluation(net)
 
+
+#############
+# DNN Methods
+#############
 
 def _dnn_regression_evaluation(net: nn.Module):
     X_train = generate_regression_data(size=1000, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)

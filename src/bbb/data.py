@@ -55,7 +55,7 @@ def generate_regression_data(size: int, batch_size: int, shuffle: bool, seed: in
         RegressionDataset(size=size),
         batch_size=batch_size, 
         shuffle=shuffle,
-        drop_last=False,
+        drop_last=True,  # This should be set to true, else it will disrupt average calculations
         pin_memory=True,
         num_workers=8
     )
