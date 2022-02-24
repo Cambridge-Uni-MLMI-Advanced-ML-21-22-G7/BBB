@@ -1,4 +1,6 @@
+import torch
 from torch import nn, optim
+import torch.nn.functional as F
 
 from bbb.config.parameters import Parameters
 from bbb.models.base import BaseModel
@@ -59,3 +61,15 @@ class CNN(ClassificationEval, BaseModel):
             self.optimizer.step()
             
         return loss
+
+    def predict(self, X):
+        self.model.eval()
+        output = self.forward(X)
+
+        # Apply softmax to the output to get probs
+        probs = F.softmax(output, dim=1)
+        
+        # Select most likely class
+        preds = torch.argmax(probs, dim=1)
+        
+        return preds, probs

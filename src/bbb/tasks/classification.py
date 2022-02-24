@@ -16,7 +16,7 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     name = "BBB_classification",
     input_dim = 28*28,
     output_dim = 10,
-    hidden_units = 1200,
+    hidden_units = 100,
     weight_mu = [-0.2, 0.2],
     weight_rho = [-5, -4],
     prior_params = PriorParameters(
@@ -31,7 +31,7 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     kl_reweighting_type=KL_REWEIGHTING_TYPES.simple,
 )
 
-def run_bbb_mnist_classification():
+def run_bbb_mnist_classification_training():
     logger.info('Beginning classification training...')
     net = ClassificationBNN(params=BBB_CLASSIFY_PARAMETERS).to(DEVICE)
 
@@ -53,7 +53,7 @@ CNN_CLASSIFY_PARAMETERS = Parameters(
     epochs = 10,
 )
 
-def run_cnn_mnist_classification():
+def run_cnn_mnist_classification_training():
     logger.info('Beginning classification training...')
     net = CNN(params=CNN_CLASSIFY_PARAMETERS).to(DEVICE)
 

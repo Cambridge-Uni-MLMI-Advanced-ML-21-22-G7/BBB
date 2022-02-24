@@ -172,14 +172,16 @@ class RegressionBNN(RegressionEval, BaseBNN):
         return -torch.distributions.Normal(outputs, 1.0).log_prob(targets).sum()
 
     def predict(self, X):
-        output = torch.zeros(size=[len(X), self.output_dim]).to(DEVICE)
+        output = torch.zeros(size=[len(X), self.output_dim, self.inference_samples]).to(DEVICE)
 
         # Repeat forward (sampling) <inference_samples> times to create probability distrib
-        for _ in torch.arange(self.inference_samples):
-            output += self.inference(X)
+        for i in torch.arange(self.inference_samples):
+            output[:,:,i] = self.forward(X)
         
-        # Take the average - at some point will also want variance
-        return output.mean(axis=1)
+        # Determine the average and the variance of the samples
+        mean, var = output.mean(dim=-1), output.var(dim=-1)
+
+        return mean, var
 
 class ClassificationBNN(ClassificationEval, BaseBNN):
     def forward(self, x):

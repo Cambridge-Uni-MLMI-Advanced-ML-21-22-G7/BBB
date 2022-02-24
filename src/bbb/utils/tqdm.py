@@ -41,14 +41,14 @@ def train_with_tqdm(net: nn.Module, train_data: Tensor, epochs: int, eval_data: 
                 net.writer.add_scalar(f'Training {net.eval_metric}', net.eval_score, epoch)
 
                 # Update tqdm progress bar
-                t_epoch.set_postfix_str(f'Loss: {loss:.5f}; {net.eval_metric}: {net.eval_score:.5f}')
+                t_epoch.set_postfix_str(f'Loss: {loss:.5f}, {net.eval_metric}: {net.eval_score:.5f}')
 
-                if not hasattr(net, 'best_eval_score') or net.eval_score is None:
-                    net.best_eval_score = net.eval_score
-                
-                # Save the latest model
-                if net.eval_score >= net.best_eval_score:
-                    net.best_eval_score = net.eval_score
-                    torch.save(net.model.state_dict(), net.save_model_path)
+            if not hasattr(net, 'best_loss') or net.best_loss is None:
+                net.best_loss = loss
+            
+            # Save the latest model
+            if loss <= net.best_loss:
+                net.best_loss = loss
+                torch.save(net.model.state_dict(), net.save_model_path)
             else:
                 t_epoch.set_postfix_str(f'Loss: {loss:.5f}')
