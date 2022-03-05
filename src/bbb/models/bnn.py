@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Tuple, List
 
 import torch
 from torch import nn, optim, Tensor
@@ -60,7 +60,7 @@ class BaseBNN(BaseModel, ABC):
             **bfc_arguments)
         )
         model_layers.append(nn.ReLU())
-        for _ in range(self.hidden_layers-1):
+        for _ in range(self.hidden_layers-2):
             model_layers.append(BFC(
                 dim_in=self.hidden_units,
                 dim_out=self.hidden_units,
@@ -106,7 +106,7 @@ class BaseBNN(BaseModel, ABC):
         :rtype: Tensor
         """
         for layer in self.model:
-            if layer == BFC:
+            if isinstance(layer, BFC):
                 X = layer.forward(X, sample=False)
             else:
                 X = layer.forward(X)
@@ -120,7 +120,7 @@ class BaseBNN(BaseModel, ABC):
         """
         log_prior = 0
         for layer in self.model:
-            if type(layer) == BFC:
+            if isinstance(layer, BFC):
                 log_prior += layer.log_prior
 
         return log_prior
@@ -133,7 +133,7 @@ class BaseBNN(BaseModel, ABC):
         """
         log_posterior = 0
         for layer in self.model:
-            if type(layer) == BFC:
+            if isinstance(layer, BFC):
                 log_posterior += layer.log_var_post
 
         return log_posterior
@@ -232,6 +232,32 @@ class BaseBNN(BaseModel, ABC):
 
         # Return the ELBO figure of the final batch as a representative example
         return batch_elbo.item()
+
+    def weight_samples(self) -> List[Tensor]:
+        """Sample the BFC layer weights.
+
+        :return: weight samples
+        :rtype: List[Tensor]
+        """
+        # Put model into evaluation mode
+        self.model.eval()
+
+        # Initialise list of tensors to hold weight samples
+        # Each tensor will hold samples of weights from a single layer
+        weight_tensors = [
+            torch.zeros(size=(self.input_dim*self.hidden_units, self.inference_samples)).to(DEVICE)]
+        weight_tensors.extend([
+            torch.zeros(size=(self.hidden_units**2, self.inference_samples)).to(DEVICE)
+            for _ in range(self.hidden_layers-2)
+        ])
+        weight_tensors.append(torch.zeros(size=(self.hidden_units*self.output_dim, self.inference_samples)).to(DEVICE))
+
+        # Repeat sampling <inference_samples> times
+        for i, layer in enumerate([l for l in self.model if isinstance(l, BFC)]):
+            for j in range(self.inference_samples):
+                weight_tensors[i][:, j] = layer.w_var_post.sample().flatten()
+
+        return weight_tensors
 
     @abstractmethod
     def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
