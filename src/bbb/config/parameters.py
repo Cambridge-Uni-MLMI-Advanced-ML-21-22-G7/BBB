@@ -10,6 +10,10 @@ class PriorParameters:
     """
     w_sigma: Union[int, float]
     b_sigma: Union[int, float]
+    w_sigma_2: Union[int, float, None] = None
+    b_sigma_2: Union[int, float, None] = None
+    w_mixture_weight: Union[int, float, None] = None
+    b_mixture_weight: Union[int, float, None] = None
 
 @dataclass
 class Parameters:
@@ -34,6 +38,7 @@ class Parameters:
     inference_samples: int = None         # to draw for inference
     kl_reweighting_type: int = None       # method used for KL reweighting
     vp_variance_type: int = None          # type of variational posterior variance used
+    prior_type: int = None
 
     # Early stopping parameters
     # By default, do not early stop

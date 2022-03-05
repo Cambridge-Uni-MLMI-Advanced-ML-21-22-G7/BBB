@@ -23,4 +23,15 @@ class _VariationalPosteriorVarianceTypes:
     """
     simple: int = 0
     paper: int = 1
-VP_VARIANCE_TYPES = _KlReweightingTypes()
+VP_VARIANCE_TYPES = _VariationalPosteriorVarianceTypes()
+
+@dataclass
+class _PriorTypes:
+    """Relates to section 3.3 of the paper which uses
+    a scale mixture prior.
+
+    The single option uses a singe Gaussian.
+    """
+    single: int = 0
+    mixture: int = 1
+PRIOR_TYPES = _PriorTypes()

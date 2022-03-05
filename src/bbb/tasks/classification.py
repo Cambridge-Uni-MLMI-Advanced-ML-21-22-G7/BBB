@@ -2,7 +2,7 @@ import logging
 
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.utils.tqdm import train_with_tqdm
-from bbb.config.constants import KL_REWEIGHTING_TYPES, VP_VARIANCE_TYPES
+from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES
 from bbb.config.parameters import Parameters, PriorParameters
 from bbb.models.bnn import ClassificationBNN
 from bbb.models.cnn import CNN
@@ -33,6 +33,7 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     epochs = 300,
     elbo_samples = 2,
     inference_samples = 10,
+    prior_type=PRIOR_TYPES.single,
     kl_reweighting_type=KL_REWEIGHTING_TYPES.simple,
     vp_variance_type=VP_VARIANCE_TYPES.simple
 )
