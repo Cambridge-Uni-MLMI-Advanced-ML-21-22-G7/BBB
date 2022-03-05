@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.utils.tqdm import train_with_tqdm
+from bbb.utils.plotting import plot_weight_samples, plot_bbb_regression_predictions
 from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES
 from bbb.config.parameters import Parameters, PriorParameters
 from bbb.models.dnn import DNN
@@ -35,12 +36,8 @@ def _bbb_regression_evaluation(net: nn.Module, X_train: DataLoader = None, X_val
 
     Y_val_pred_mean, Y_val_pred_var = net.predict(X_val.dataset[:][0])
     Y_val_pred_mean, Y_val_pred_var = Y_val_pred_mean.detach().numpy().flatten(), torch.sqrt(Y_val_pred_var).detach().numpy().flatten()
-    
-    plt.plot(X_train_arr[:,0], X_train_arr[:,1], label='Original')
-    plt.plot(X_val_arr[:,0], Y_val_pred_mean, marker='x', label='Prediction')
-    plt.fill_between(X_val_arr[:,0], Y_val_pred_mean-2*Y_val_pred_var, Y_val_pred_mean+2*Y_val_pred_var, alpha=0.5)
-    plt.legend()
-    plt.show()
+
+    plot_bbb_regression_predictions(X_train_arr=X_train_arr, X_val_arr=X_val_arr, Y_val_pred_mean=Y_val_pred_mean, Y_val_pred_var=Y_val_pred_var)
 
 
 BNN_REGRESSION_PARAMETERS = Parameters(
@@ -58,7 +55,7 @@ BNN_REGRESSION_PARAMETERS = Parameters(
         b_mixture_weight=0.5,
     ),
     hidden_units = 400,
-    hidden_layers=3,
+    hidden_layers = 4,
     batch_size = 100,
     lr = 1e-3,
     epochs = 100,
@@ -77,6 +74,9 @@ def run_bbb_regression_training():
     X_val = generate_regression_data(train=False, size=BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
 
     train_with_tqdm(net=net, train_data=X_train, eval_data=X_val, epochs=BNN_REGRESSION_PARAMETERS.epochs)
+
+    weight_samples = net.weight_samples()
+    plot_weight_samples(weight_samples)
 
     _bbb_regression_evaluation(net, X_train=X_train, X_val=X_val)
 
@@ -116,12 +116,12 @@ DNN_REGRESSION_PARAMETERS = Parameters(
     name = "DNN_regression",
     input_dim = 1,
     output_dim = 1,
-    hidden_layers = 3,
-    hidden_units = 50,
+    hidden_layers = 4,
+    hidden_units = 400,
     batch_size = 100,
-    lr = 0.01,
+    lr = 1e-3,
     epochs = 100,
-    early_stopping=True,
+    early_stopping=False,
     early_stopping_thresh=1e-4
 )
 
