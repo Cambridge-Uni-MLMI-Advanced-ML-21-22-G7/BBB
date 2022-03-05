@@ -1,10 +1,15 @@
+import logging
+
 import torch
 from torch import nn, distributions
 from torch.nn import Parameter
 
 from bbb.utils.pytorch_setup import DEVICE
-from bbb.config.constants import VP_VARIANCE_TYPES
+from bbb.config.constants import PRIOR_TYPES, VP_VARIANCE_TYPES
 from bbb.config.parameters import PriorParameters
+
+
+logger = logging.getLogger(__name__)
 
 class GaussianVarPost(nn.Module):
     def __init__(self, mu: float, rho: float, vp_var_type: int, dim_in: int = None, dim_out: int = None) -> None:
@@ -47,7 +52,16 @@ class GaussianVarPost(nn.Module):
 class BFC(nn.Module):
     """Bayesian (Weights) Fully Connected Layer"""
     
-    def __init__(self, dim_in: int, dim_out: int, weight_mu: float, weight_rho: float, prior_params: PriorParameters, vp_var_type: int):
+    def __init__(
+        self,
+        dim_in: int, 
+        dim_out: int,
+        weight_mu: float,
+        weight_rho: float,
+        prior_params: PriorParameters,
+        prior_type: int,
+        vp_var_type: int,
+    ):
         super().__init__()
         
         # Create IN X OUT weight tensor that we can sample from
@@ -55,10 +69,32 @@ class BFC(nn.Module):
         self.w_var_post = GaussianVarPost(weight_mu, weight_rho, dim_in=dim_in, dim_out=dim_out, vp_var_type=vp_var_type)
         self.b_var_post = GaussianVarPost(weight_mu, weight_rho, dim_out=dim_out, vp_var_type=vp_var_type)
 
-        # Set Prior distribution over the weights
-        assert prior_params.w_sigma and prior_params.b_sigma  # Assert that the required prior parameters are present
-        self.w_prior = distributions.Normal(0, prior_params.w_sigma)
-        self.b_prior = distributions.Normal(0, prior_params.b_sigma)
+        # Set Prior distribution over the weights and biases
+        assert prior_params.w_sigma and prior_params.b_sigma  # Assert that minimum required prior parameters are present
+        if prior_type == PRIOR_TYPES.single:
+            # Single Gaussian distribution
+            logger.info(f'Weights Prior: Gaussian with mean {0} and variance {prior_params.w_sigma}')
+            logger.info(f'Biases Prior: Gaussian with mean {0} and variance {prior_params.b_sigma}')
+
+            self.w_prior = distributions.Normal(0, prior_params.w_sigma)
+            self.b_prior = distributions.Normal(0, prior_params.b_sigma)
+        elif prior_type == PRIOR_TYPES.mixture:
+            # Mixture of Gaussian distributions
+            logger.info(f'Weights Prior: Gaussian mixture with means {(0,0)}, variances {(prior_params.w_sigma, prior_params.w_sigma_2)} and weight {prior_params.w_mixture_weight}')
+            logger.info(f'Biases Prior: Gaussian mixture with means {(0,0)}, variances {(prior_params.b_sigma, prior_params.b_sigma_2)} and weight {prior_params.b_mixture_weight}')
+
+            assert all((prior_params.w_sigma_2, prior_params.b_sigma_2, prior_params.w_mixture_weight, prior_params.b_mixture_weight))
+            
+            w_mix = distributions.Categorical(torch.tensor((prior_params.w_mixture_weight, 1-prior_params.w_mixture_weight)))
+            b_mix = distributions.Categorical(torch.tensor((prior_params.b_mixture_weight, 1-prior_params.b_mixture_weight)))
+
+            w_norm_comps = distributions.Normal(torch.zeros(2), torch.tensor((prior_params.w_sigma, prior_params.w_sigma_2), dtype=torch.float32))
+            b_norm_comps = distributions.Normal(torch.zeros(2), torch.tensor((prior_params.b_sigma, prior_params.b_sigma_2), dtype=torch.float32))
+
+            self.w_prior = distributions.MixtureSameFamily(w_mix, w_norm_comps)
+            self.b_prior = distributions.MixtureSameFamily(b_mix, b_norm_comps)
+        else:
+            raise RuntimeError(f'Unexpected prior type: {prior_type}')
 
         self.log_prior = 0
         self.log_var_post = 0

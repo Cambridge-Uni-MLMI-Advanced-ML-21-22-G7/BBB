@@ -39,6 +39,7 @@ class BaseBNN(BaseModel, ABC):
         self.inference_samples = params.inference_samples
         self.batch_size = params.batch_size
         self.lr = params.lr
+        self.prior_type = params.prior_type
         self.kl_reweighting_type = params.kl_reweighting_type
         self.vp_variance_type = params.vp_variance_type
 
@@ -47,6 +48,7 @@ class BaseBNN(BaseModel, ABC):
             "weight_mu": self.weight_mu,
             "weight_rho": self.weight_rho,
             "prior_params": self.prior_params,
+            "prior_type": self.prior_type,
             "vp_var_type": self.vp_variance_type
         }
 
