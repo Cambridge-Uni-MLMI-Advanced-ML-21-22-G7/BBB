@@ -2,7 +2,7 @@ import logging
 
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.utils.tqdm import train_with_tqdm
-from bbb.config.constants import KL_REWEIGHTING_TYPES
+from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES
 from bbb.config.parameters import Parameters, PriorParameters
 from bbb.models.bnn import ClassificationBNN
 from bbb.models.cnn import CNN
@@ -12,11 +12,16 @@ from bbb.data import load_mnist
 logger = logging.getLogger(__name__)
 
 
+#############
+# BBB Methods
+#############
+
 BBB_CLASSIFY_PARAMETERS = Parameters(
     name = "BBB_classification",
     input_dim = 28*28,
     output_dim = 10,
     hidden_units = 1200,
+    hidden_layers=3,
     weight_mu = [-0.2, 0.2],
     weight_rho = [-5, -4],
     prior_params = PriorParameters(
@@ -28,10 +33,12 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     epochs = 300,
     elbo_samples = 2,
     inference_samples = 10,
+    prior_type=PRIOR_TYPES.single,
     kl_reweighting_type=KL_REWEIGHTING_TYPES.simple,
+    vp_variance_type=VP_VARIANCE_TYPES.simple
 )
 
-def run_bbb_mnist_classification():
+def run_bbb_mnist_classification_training():
     logger.info('Beginning classification training...')
     net = ClassificationBNN(params=BBB_CLASSIFY_PARAMETERS).to(DEVICE)
 
@@ -43,6 +50,10 @@ def run_bbb_mnist_classification():
     logger.info('Completed classification training...')
 
 
+#############
+# CNN Methods
+#############
+
 CNN_CLASSIFY_PARAMETERS = Parameters(
     name = "CNN_classification",
     input_dim = 28*28,
@@ -53,7 +64,7 @@ CNN_CLASSIFY_PARAMETERS = Parameters(
     epochs = 10,
 )
 
-def run_cnn_mnist_classification():
+def run_cnn_mnist_classification_training():
     logger.info('Beginning classification training...')
     net = CNN(params=CNN_CLASSIFY_PARAMETERS).to(DEVICE)
 

@@ -1,16 +1,22 @@
 import torch
-import torch.nn.functional as F
+from torch.utils.data import DataLoader
 
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.config.parameters import Parameters
 
 
 class RegressionEval:
+    # Evaluation method for regression tasks.
+    # Should be the first class inherited by all regression models.
 
+    # This will be shown in the tqdm progress bar
+    # and in Tensorboard.
     eval_metric = 'RMSE'
 
-    def eval(self, test_data):
+    def eval(self, test_data: DataLoader) -> float:
+        # Put model in evaluation mode
         self.model.eval()
+
         running_err = 0
         total = 0
 
@@ -19,19 +25,26 @@ class RegressionEval:
                 X = X.to(DEVICE)
                 Y = Y.to(DEVICE)
 
-                pred_Y = self(X)
+                pred_Y, _ = self.predict(X)
 
                 total += self.batch_size
                 running_err += ((pred_Y - Y)*(pred_Y - Y)).sum().data
 
         self.eval_score = torch.sqrt(running_err/total)
+        return self.eval_score
 
 class ClassificationEval:
+    # Evaluation method for classification tasks.
+    # Should be the first class inherited by all classification models.
 
+    # This will be shown in the tqdm progress bar
+    # and in Tensorboard.
     eval_metric = 'Acc'
 
-    def eval(self, test_data):
+    def eval(self, test_data: DataLoader) -> float:
+        # Put model in evaluation mode
         self.model.eval()
+
         correct = 0
         total = 0
 
@@ -40,9 +53,10 @@ class ClassificationEval:
                 inputs = inputs.to(DEVICE)
                 labels = labels.to(DEVICE)
 
-                preds = self(inputs)
+                preds, probs = self.predict(inputs)
 
                 total += self.batch_size
                 correct += (labels == preds).sum().item()
 
         self.eval_score = correct / total
+        return self.eval_score

@@ -1,6 +1,7 @@
-import torch
-from torch import nn, optim
-import torch.nn.functional as F
+from typing import Tuple
+
+from torch import nn, optim, Tensor
+from torch.utils.data import DataLoader
 
 from bbb.config.parameters import Parameters
 from bbb.models.base import BaseModel
@@ -8,11 +9,19 @@ from bbb.models.evaluation import RegressionEval
 
 
 class DNN(RegressionEval, BaseModel):
-    def __init__(self, params: Parameters):
+    def __init__(self, params: Parameters) -> None:
+        """Vanilla DNN with customisable number of hidden layers.
+
+        This class inherits from RegressionEval and then BaseModel.
+        The order here is important.
+
+        :param params: model parameters
+        :type params: Parameters
+        """
         super().__init__(params=params)
 
         # Parameters
-        self.input_dim = params.input_dim # params.get('input_dim', "default value")
+        self.input_dim = params.input_dim
         self.output_dim = params.output_dim
         self.hidden_layers = params.hidden_layers
         self.hidden_units = params.hidden_units
@@ -20,24 +29,23 @@ class DNN(RegressionEval, BaseModel):
         self.lr = params.lr
 
         # Model
-        self.model = nn.Sequential( 
-            nn.Linear(
-                in_features=self.input_dim,
-                out_features=self.hidden_units
-            ),
-            nn.ReLU(),
-            *[
-                nn.Linear(
+        model_layers = []
+        model_layers.append(nn.Linear(
+            in_features=self.input_dim,
+            out_features=self.hidden_units
+        ))
+        model_layers.append(nn.ReLU())
+        for _ in range(self.hidden_layers-2):
+            model_layers.append(nn.Linear(
                     in_features=self.hidden_units,
                     out_features=self.hidden_units
-                ),
-                nn.ReLU(),
-            ]*self.hidden_layers,
-            nn.Linear(
-                in_features=self.hidden_units,
-                out_features=self.output_dim
-            ),
-        )
+                ))
+            model_layers.append(nn.ReLU())
+        model_layers.append(nn.Linear(
+            in_features=self.hidden_units,
+            out_features=self.output_dim
+        ))
+        self.model = nn.Sequential(*model_layers)
 
         # Criterion
         self.criterion = nn.MSELoss()
@@ -50,15 +58,16 @@ class DNN(RegressionEval, BaseModel):
 
         # Scheduler
         self.scheduler = optim.lr_scheduler.StepLR(
-            self.optimizer,step_size=100,
+            self.optimizer,
+            step_size=100,
             gamma=0.5
         )
 
 
-    def forward(self, x):
-        return self.model.forward(x)
+    def forward(self, X: Tensor):
+        return self.model.forward(X)
 
-    def train(self, train_data):
+    def train(self, train_data: DataLoader):
         self.model.train()
 
         for i, (x, y) in enumerate(train_data):
@@ -71,6 +80,14 @@ class DNN(RegressionEval, BaseModel):
             
         return loss
 
-    def predict(self, predict_data):
+    def predict(self, X: Tensor) -> Tuple[Tensor, None]:
+        # Put model in evaluation mode
         self.model.eval()
-        return self(predict_data)
+
+        # Make predictions
+        preds = self(X)
+
+        # Return tuple with preds and None
+        # BBB methods return mean and variance of samples NNs
+        # Hence, using None here to keep return dimensions consistent
+        return preds, None

@@ -44,6 +44,17 @@ Whereas, classification can be run deterministically using:
 bbb class -d
 ```
 
+## Class Inheritance
+
+The following diagram outlines the class inheritance structure of the implemented models.
+<br/>
+<br/>
+
+![image class_inheritance](./bbb_inheritance.png)
+
+<br/>
+<br/>
+
 ## Citations
 
 Whilst all code written is our own, the following repositories were used as sources of inspiration when implementing this project:

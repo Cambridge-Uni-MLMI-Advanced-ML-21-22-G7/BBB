@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import T_co
 from torchvision import datasets, transforms
+import pandas as pd
 
 
 def load_mnist(train: bool, batch_size: int, shuffle: bool) -> DataLoader:
@@ -15,10 +16,33 @@ def load_mnist(train: bool, batch_size: int, shuffle: bool) -> DataLoader:
         drop_last=True
     )
 
+def load_bandit(path: str):
+    # reading the dataset
+    df = pd.read_csv(path)
+    # randomizing the dataset
+    df = df.sample(frac=1.0)
+    # check the class distribution
+    print(df['edible'].value_counts())
+
+    # splitting our df
+    X = df.copy().drop('edible', axis=1)
+    # edible -> 0, poisonous -> 1
+    y = df.copy()['edible'].astype('category').cat.codes
+
+    # One-hot
+    X = pd.get_dummies(X, drop_first=True)
+
+    return X,y
+
+
+
+
 class RegressionDataset(Dataset):
     def __init__(
         self,
-        size: int = 100,
+        size: int,
+        l_lim: float,
+        u_lim: float,
         seed: Union[int, None] = 0
     ) -> None:
         """Creating the regression dataset used in the paper.
@@ -26,8 +50,12 @@ class RegressionDataset(Dataset):
 
         y = x + 0.3sin(2π(x+ɛ)) + 0.3sin(4π(x+ɛ)) + ɛ
 
-        :param size: size of vector to generate, defaults to 100
-        :type size: int, optional
+        :param size: size of vector to generate
+        :type size: int
+        :param l_lim: lower x-range limit to generate data over
+        :type l_lim: float
+        :param u_lim: upper x-range limit to generate data over
+        :type u_lim: float
         :param seed: random seed to be used, defaults to 0
         :type seed: Union[int, None], optional
         """
@@ -39,7 +67,7 @@ class RegressionDataset(Dataset):
         if self.seed is not None:
             torch.manual_seed(self.seed)
 
-        self.x = torch.unsqueeze(torch.linspace(-0.2, 1.2, self.size, requires_grad=False), dim=1)
+        self.x = torch.unsqueeze(torch.linspace(l_lim, u_lim, self.size, requires_grad=False), dim=1)
 
         epsilon = torch.randn(self.x.size()) * 0.02
         self.y = self.x + 0.3*torch.sin(2*np.pi*(self.x + epsilon)) + 0.3*torch.sin(4*np.pi*(self.x + epsilon)) + epsilon
@@ -50,12 +78,22 @@ class RegressionDataset(Dataset):
     def __getitem__(self, index) -> T_co:
         return self.x[index], self.y[index]
 
-def generate_regression_data(size: int, batch_size: int, shuffle: bool, seed: int = None) -> DataLoader:
-    return DataLoader(
-        RegressionDataset(size=size),
-        batch_size=batch_size, 
-        shuffle=shuffle,
-        drop_last=False,
-        pin_memory=True,
-        num_workers=8
-    )
+def generate_regression_data(train: bool, size: int, batch_size: int, shuffle: bool, seed: int = None) -> DataLoader:
+    if train:
+        return DataLoader(
+            RegressionDataset(size=size, l_lim=0.0, u_lim=0.5),
+            batch_size=batch_size, 
+            shuffle=shuffle,
+            drop_last=True,  # This should be set to true, else it will disrupt average calculations
+            pin_memory=True,
+            num_workers=8
+        )
+    else:
+        return DataLoader(
+            RegressionDataset(size=size, l_lim=-0.2, u_lim=1.4),
+            batch_size=batch_size, 
+            shuffle=shuffle,
+            drop_last=True,  # This should be set to true, else it will disrupt average calculations
+            pin_memory=True,
+            num_workers=8
+        )
