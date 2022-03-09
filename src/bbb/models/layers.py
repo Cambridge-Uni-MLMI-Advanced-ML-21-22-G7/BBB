@@ -25,7 +25,6 @@ class GaussianVarPost(nn.Module):
 
             mu_tensor = torch.Tensor(dim_out, dim_in).uniform_(*mu)
             rho_tensor = torch.Tensor(dim_out, dim_in).uniform_(*rho)
-
         self.mu = Parameter(mu_tensor)
         self.rho = Parameter(rho_tensor)
         self.vp_var_type = vp_var_type
@@ -45,6 +44,7 @@ class GaussianVarPost(nn.Module):
         return sample
 
     def log_prob(self, value):
+        print(self.mu)
         log_prob = distributions.Normal(loc=self.mu, scale=self.sigma).log_prob(value)
         return log_prob
 

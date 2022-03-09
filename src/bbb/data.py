@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import T_co
 from torchvision import datasets, transforms
+import pandas as pd
 
 
 def load_mnist(train: bool, batch_size: int, shuffle: bool) -> DataLoader:
@@ -14,6 +15,27 @@ def load_mnist(train: bool, batch_size: int, shuffle: bool) -> DataLoader:
         shuffle=shuffle,
         drop_last=True
     )
+
+def load_bandit(path: str):
+    # reading the dataset
+    df = pd.read_csv(path)
+    # randomizing the dataset
+    df = df.sample(frac=1.0)
+    # check the class distribution
+    print(df['edible'].value_counts())
+
+    # splitting our df
+    X = df.copy().drop('edible', axis=1)
+    # edible -> 0, poisonous -> 1
+    y = df.copy()['edible'].astype('category').cat.codes
+
+    # One-hot
+    X = pd.get_dummies(X, drop_first=True)
+
+    return X,y
+
+
+
 
 class RegressionDataset(Dataset):
     def __init__(
