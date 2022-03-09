@@ -43,5 +43,3 @@ def plot_weight_samples(weight_samples: List[Tensor]):
     ax.set_xlabel('Weight Value')
     ax.set_ylabel('Density')
     plt.show()
-
-# def plot_bandit()
