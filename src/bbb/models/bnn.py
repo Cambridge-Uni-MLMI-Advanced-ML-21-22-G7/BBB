@@ -192,7 +192,7 @@ class BaseBNN(BaseModel, ABC):
         # section 3.4 for pi description
         # pi should not be applied to the NLL
         elbo = pi*(log_variational_posterior - log_prior) + nll
-
+        
         return elbo, log_prior, log_variational_posterior, nll
 
 
@@ -344,3 +344,30 @@ class ClassificationBNN(ClassificationEval, BaseBNN):
         preds = torch.argmax(probs, dim=1)
         
         return preds, probs
+
+class BanditBNN(RegressionEval, BaseBNN):
+    # NOTE: This class inherits from RegressionEval and then BaseBNN
+    # The order here is important
+
+    def get_nll(self, outputs: torch.Tensor, targets: torch.Tensor) -> float:
+        """Calculation of NLL assuming noise with zero mean and unit variance.
+        
+        TODO: confirm we want this.
+        """
+        return 0
+
+    def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
+        # Put model into evaluation mode
+        self.model.eval()
+
+        # Initialise tensor to hold predictions
+        output = torch.zeros(size=[len(X), self.output_dim, self.inference_samples]).to(DEVICE)
+
+        # Repeat forward (sampling) <inference_samples> times
+        for i in torch.arange(self.inference_samples):
+            output[:,:,i] = self.forward(X)
+        
+        # Determine the average and the variance of the samples
+        mean, var = output.mean(dim=-1), output.var(dim=-1)
+
+        return mean, var

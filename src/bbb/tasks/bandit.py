@@ -14,7 +14,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from bbb.models.bnn import RegressionBNN
+from bbb.models.bnn import BanditBNN
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +126,7 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     name = "BBB_regression",
     input_dim = X.shape[1],
     output_dim = 1,
-    weight_mu = [-0.2, 0.2],
+    weight_mu = [-1, 1],
     weight_rho = [-5, -4],
     prior_params = PriorParameters(
         w_sigma=1.,
@@ -152,18 +153,15 @@ class BBB_bandit(MushroomBandit):
     def __init__(self, lr=2e-5, **kwargs):
         super().__init__(**kwargs)
         self.n_weight_sampling = 1
-        self.net = RegressionBNN(params=BNN_REGRESSION_PARAMETERS).to(DEVICE)
+        self.net = BanditBNN(params=BNN_REGRESSION_PARAMETERS).to(DEVICE)
         self.n_samples = BNN_REGRESSION_PARAMETERS.name
         self.optimizer = optim.SGD(self.net.parameters(), lr=lr)
         
     def loss_step(self, x, y, batch_id):
-        # print(batch_id)
         beta = 2 ** (64 - (batch_id + 1)) / (2 ** 64 - 1) 
         self.net.model.train()
         self.net.zero_grad()
-        # print(X.shape[1])
         loss = self.net.sample_ELBO(x, y, beta, 2)
-        # print(loss)
         net_loss = loss[0]
         net_loss.backward()
         self.optimizer.step()
@@ -174,10 +172,14 @@ y = y.to_numpy()
 rate=1e-5
 mnets = {'Greedy':Greedy(X=X,y=y,lr=rate,epsilon=0),
          'Greedy 1%':Greedy(X=X,y=y,lr=rate, epsilon=0.01),
-         'Greedy 5%':Greedy(X=X,y=y,lr=rate, epsilon=0.05)}
+         'Greedy 5%':Greedy(X=X,y=y,lr=rate, epsilon=0.05),
+         'BBB':BBB_bandit(X=X,y=y,lr=rate)}
 
-NB_STEPS = 100
+NB_STEPS = 5000
 torch.autograd.set_detect_anomaly(True)
+# setting seeds
+# random.seed(123)
+# np.random.seed(123)
 
 for name, net in mnets.items():
     net.init_buffer()

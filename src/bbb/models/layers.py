@@ -44,7 +44,7 @@ class GaussianVarPost(nn.Module):
         return sample
 
     def log_prob(self, value):
-        print(self.mu)
+        # print(self.mu)
         log_prob = distributions.Normal(loc=self.mu, scale=self.sigma).log_prob(value)
         return log_prob
 
@@ -93,6 +93,13 @@ class BFC(nn.Module):
 
             self.w_prior = distributions.MixtureSameFamily(w_mix, w_norm_comps)
             self.b_prior = distributions.MixtureSameFamily(b_mix, b_norm_comps)
+        elif prior_type == PRIOR_TYPES.laplacian:
+            # Single Laplacian distribution
+            logger.info(f'Weights Prior: Laplacian with mean {0} and variance {prior_params.w_sigma}')
+            logger.info(f'Biases Prior: Laplacian with mean {0} and variance {prior_params.b_sigma}')
+
+            self.w_prior = distributions.Laplace(0, prior_params.w_sigma)
+            self.b_prior = distributions.Laplace(0, prior_params.b_sigma)
         else:
             raise RuntimeError(f'Unexpected prior type: {prior_type}')
 
