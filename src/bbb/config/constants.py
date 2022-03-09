@@ -34,4 +34,5 @@ class _PriorTypes:
     """
     single: int = 0
     mixture: int = 1
+    laplacian: int = 2
 PRIOR_TYPES = _PriorTypes()
