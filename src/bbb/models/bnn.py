@@ -377,7 +377,7 @@ class RegressionBNN(RegressionEval, BaseBNN):
         mean, var = output.mean(dim=-1), output.var(dim=-1)
 
         # Determine the quartiles
-        q = torch.tensor([0., 0.25, 0.75, 1.])
+        q = torch.tensor([0., 0.25, 0.75, 1.]).to(DEVICE)
         quartiles = torch.quantile(output, q, dim=-1)
 
         return mean, var, quartiles
