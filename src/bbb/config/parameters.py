@@ -31,8 +31,8 @@ class Parameters:
     # Parameters common to some models
     # All default to None
     hidden_units: int = None
-    weight_mu: List[float] = None   # range for mu 
-    weight_rho: List[float] = None  # range for rho
+    weight_mu_range: List[float] = None   # range for mu 
+    weight_rho_range: List[float] = None  # range for rho
     prior_params: PriorParameters = None
     elbo_samples: int = None              # to draw for ELBO (training)
     inference_samples: int = None         # to draw for inference
