@@ -67,6 +67,14 @@
             "program": "${workspaceFolder}/src/bbb/cli.py",
             "console": "integratedTerminal",
             "args": ["class", "-d", "-e"]
+        },
+        {
+            "name": "RL Training",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/bbb/cli.py",
+            "console": "integratedTerminal",
+            "args": ["rl"]
         }
     ]
 }

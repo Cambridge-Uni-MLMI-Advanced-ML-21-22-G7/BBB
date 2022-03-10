@@ -1,4 +1,5 @@
-from typing import Union
+import logging
+from typing import Union, Tuple
 
 import numpy as np
 import torch
@@ -6,6 +7,12 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import T_co
 from torchvision import datasets, transforms
 import pandas as pd
+
+from bbb.config.constants import MUSHROOM_DATASET_PATH
+from bbb.utils.pytorch_setup import DEVICE
+
+
+logger = logging.getLogger(__name__)
 
 
 def load_mnist(train: bool, batch_size: int, shuffle: bool) -> DataLoader:
@@ -16,26 +23,29 @@ def load_mnist(train: bool, batch_size: int, shuffle: bool) -> DataLoader:
         drop_last=True
     )
 
-def load_bandit(path: str):
+def load_bandit() -> Tuple[torch.Tensor, torch.Tensor]:
     # reading the dataset
-    df = pd.read_csv(path)
+    df = pd.read_csv(MUSHROOM_DATASET_PATH)
+
     # randomizing the dataset
     df = df.sample(frac=1.0)
+
     # check the class distribution
-    print(df['edible'].value_counts())
+    logger.debug(f'Class distribution of mushrooms: {df["edible"].value_counts()}')
 
     # splitting our df
     X = df.copy().drop('edible', axis=1)
+
     # edible -> 0, poisonous -> 1
     y = df.copy()['edible'].astype('category').cat.codes
 
     # One-hot
     X = pd.get_dummies(X, drop_first=True)
 
+    X = torch.Tensor(X.copy().values, device=DEVICE)
+    y = torch.Tensor(y.copy().values, device=DEVICE).unsqueeze(-1)
+
     return X,y
-
-
-
 
 class RegressionDataset(Dataset):
     def __init__(
