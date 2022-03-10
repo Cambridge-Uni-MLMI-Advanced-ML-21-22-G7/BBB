@@ -359,6 +359,9 @@ class RegressionBNN(RegressionEval, BaseBNN):
         return -torch.distributions.Normal(outputs, 1.0).log_prob(targets).sum()
 
     def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
+        # Ensure tensor is assigned to correct device
+        X = X.to(DEVICE)
+
         # Put model into evaluation mode
         self.model.eval()
 

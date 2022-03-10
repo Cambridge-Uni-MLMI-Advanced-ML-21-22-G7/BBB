@@ -33,7 +33,7 @@ class RegressionEval:
         self.eval_score = torch.sqrt(running_err/total)
 
         # Record the evaluation metric score
-        self.eval_metric_hist.append(self.eval_score)
+        self.eval_metric_hist.append(self.eval_score.item())
 
         return self.eval_score
 
@@ -65,6 +65,6 @@ class ClassificationEval:
         self.eval_score = correct / total
 
         # Record the evaluation metric score
-        self.eval_metric_hist.append(self.eval_score)
+        self.eval_metric_hist.append(self.eval_score.item())
 
         return self.eval_score
