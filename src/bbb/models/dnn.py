@@ -77,6 +77,9 @@ class DNN(RegressionEval, BaseModel):
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
+
+        # Record the loss
+        self.loss_hist.append(loss)
             
         return loss
 

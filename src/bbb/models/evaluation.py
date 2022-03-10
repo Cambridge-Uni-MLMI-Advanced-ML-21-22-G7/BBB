@@ -31,6 +31,10 @@ class RegressionEval:
                 running_err += ((pred_Y - Y)*(pred_Y - Y)).sum().data
 
         self.eval_score = torch.sqrt(running_err/total)
+
+        # Record the evaluation metric score
+        self.eval_metric_hist.append(self.eval_score)
+
         return self.eval_score
 
 class ClassificationEval:
@@ -59,4 +63,8 @@ class ClassificationEval:
                 correct += (labels == preds).sum().item()
 
         self.eval_score = correct / total
+
+        # Record the evaluation metric score
+        self.eval_metric_hist.append(self.eval_score)
+
         return self.eval_score

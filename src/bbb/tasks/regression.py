@@ -44,8 +44,8 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     name = "BBB_regression",
     input_dim = 1,
     output_dim = 1,
-    weight_mu_range = 0, # [-0.2, 0.2],
-    weight_rho_range = 0.2, #  [-5, -4],
+    weight_mu = 0.0,
+    weight_rho = 1.0,
     prior_params = PriorParameters(
         w_sigma=1.,
         b_sigma=1.,
@@ -58,7 +58,7 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     hidden_layers = 4,
     batch_size = 100,
     lr = 1e-3,
-    epochs = 100,
+    epochs = 2,
     elbo_samples = 5,
     inference_samples = 10,
     prior_type = PRIOR_TYPES.single,
@@ -82,10 +82,10 @@ def run_bbb_regression_training():
     _bbb_regression_evaluation(net, X_train=X_train, X_val=X_val)
 
 
-def run_bbb_regression_evaluation():
-    logger.info('Beginning regression evaluation...')
+def run_bbb_regression_evaluation(model_path: str):
+    logger.info(f'Beginning regression evaluation against {model_path}...')
     net = RegressionBNN(params=BNN_REGRESSION_PARAMETERS).to(DEVICE)
-    net.load_saved()
+    net.load_saved(model_path=model_path)
     _bbb_regression_evaluation(net)
 
 
@@ -138,8 +138,8 @@ def run_dnn_regression_training():
     _dnn_regression_evaluation(net, X_train=X_train, X_val=X_val)
 
 
-def run_dnn_regression_evaluation():
-    logger.info('Beginning regression evaluation...')
+def run_dnn_regression_evaluation(model_path: str):
+    logger.info(f'Beginning regression evaluation against {model_path}...')
     net = DNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
-    net.load_saved()
+    net.load_saved(model_path=model_path)
     _dnn_regression_evaluation(net)

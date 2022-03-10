@@ -36,8 +36,7 @@ def init_argparse() -> argparse.ArgumentParser:
     parser.add_argument(
         '--evaluate',
         '-e',
-        action='store_true',
-        help='Run evaluation only, using the latest saved model'
+        help='Path of model to run evaluation against'
     )
     parser.add_argument(
         '--verbose',
@@ -63,12 +62,12 @@ def main() -> None:
     if args.model_type == 'reg':
         if args.deterministic:
             if args.evaluate:
-                run_dnn_regression_evaluation()
+                run_dnn_regression_evaluation(args.evaluate)
             else:
                 run_dnn_regression_training()
         else:
             if args.evaluate:
-                run_bbb_regression_evaluation()
+                run_bbb_regression_evaluation(args.evaluate)
             else:
                 run_bbb_regression_training()
     elif args.model_type == 'class':
