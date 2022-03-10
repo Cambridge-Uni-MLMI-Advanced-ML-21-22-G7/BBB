@@ -203,7 +203,10 @@ def run_rl_training():
             mushroom_idx = np.random.randint(X.shape[0])
             for name, net in mnets.items():
                 avg_loss = net.update(X, y, mushroom_idx)
-                t_epoch.set_postfix_str(f'Loss: {avg_loss:.5f}')
+
+                # Update the loss in tqdm every 10 epochs
+                if not step%10:
+                    t_epoch.set_postfix_str(f'Loss: {avg_loss:.5f}')
 
     # Plotting
     fig, ax = plt.subplots() 
