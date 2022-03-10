@@ -5,8 +5,8 @@ import setuptools
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-with open('requirements.txt') as f:
-    required = f.read().splitlines()
+# with open('requirements.txt') as f:
+#     # required = f.read().splitlines()
 
 setuptools.setup(
     name="BBB",
@@ -26,6 +26,5 @@ setuptools.setup(
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.9",
-    install_requires=required,
     entry_points={'console_scripts':['bbb=bbb.cli:main']},
 )

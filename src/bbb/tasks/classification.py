@@ -8,7 +8,6 @@ from bbb.models.bnn import ClassificationBNN
 from bbb.models.cnn import CNN
 from bbb.data import load_mnist
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -22,8 +21,8 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     output_dim = 10,
     hidden_units = 1200,
     hidden_layers=3,
-    weight_mu_range = [-0.2, 0.2],
-    weight_rho_range = [-5, -4],
+    weight_mu_range = 0, # [-0.2, 0.2],
+    weight_rho_range = 0.2, # [-5, -4],
     prior_params = PriorParameters(
         w_sigma=1,
         b_sigma=2,
@@ -42,9 +41,13 @@ def run_bbb_mnist_classification_training():
     logger.info('Beginning classification training...')
     net = ClassificationBNN(params=BBB_CLASSIFY_PARAMETERS).to(DEVICE)
 
+    logger.info('Initialized BNN...')
+
     X_train = load_mnist(train=True, batch_size=BBB_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
     X_val = load_mnist(train=False, batch_size=BBB_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
-
+    
+    logger.info('Loaded MNIST...')
+    
     train_with_tqdm(net=net, train_data=X_train, epochs=BBB_CLASSIFY_PARAMETERS.epochs, eval_data=X_val)
 
     logger.info('Completed classification training...')
