@@ -38,9 +38,9 @@ class GaussianVarPost(nn.Module):
     @property
     def sigma(self):
         if self.vp_var_type == VP_VARIANCE_TYPES.paper:
-            return torch.log1p(1+torch.exp(self.rho))  # section 3.2
+            return torch.log1p(torch.exp(self.rho))  # section 3.2
         elif self.vp_var_type == VP_VARIANCE_TYPES.simple:
-            return torch.log1p(torch.exp(self.rho))
+            return torch.log(torch.exp(self.rho))
         else:
             raise RuntimeError(f'Unrecognised variational posterior variance type: {self.vp_var_type}')
 
