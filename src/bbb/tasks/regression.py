@@ -34,10 +34,21 @@ def _bbb_regression_evaluation(net: nn.Module, X_train: DataLoader = None, X_val
     X_train_arr = np.array(X_train.dataset, dtype=float)
     X_val_arr = np.array(X_val.dataset, dtype=float)
 
-    Y_val_pred_mean, Y_val_pred_var = net.predict(X_val.dataset[:][0])
-    Y_val_pred_mean, Y_val_pred_var = Y_val_pred_mean.detach().cpu().numpy().flatten(), torch.sqrt(Y_val_pred_var).detach().cpu().numpy().flatten()
+    Y_val_pred_mean, Y_val_pred_var, Y_val_pred_quartiles = net.predict(X_val.dataset[:][0])
+    Y_val_pred_mean, Y_val_pred_var, Y_val_pred_quartiles = (
+        Y_val_pred_mean.detach().cpu().numpy().flatten(),
+        Y_val_pred_var.detach().cpu().numpy().flatten(),
+        Y_val_pred_quartiles.detach().cpu().numpy()[:,:,0]
+    )
 
-    plot_bbb_regression_predictions(X_train_arr=X_train_arr, X_val_arr=X_val_arr, Y_val_pred_mean=Y_val_pred_mean, Y_val_pred_var=Y_val_pred_var, save_path=net.save_plot_path)
+    plot_bbb_regression_predictions(
+        X_train_arr=X_train_arr,
+        X_val_arr=X_val_arr,
+        Y_val_pred_mean=Y_val_pred_mean,
+        Y_val_pred_var=Y_val_pred_var,
+        Y_val_pred_quartiles=Y_val_pred_quartiles,
+        save_path=net.save_plot_path
+    )
 
 
 BNN_REGRESSION_PARAMETERS = Parameters(

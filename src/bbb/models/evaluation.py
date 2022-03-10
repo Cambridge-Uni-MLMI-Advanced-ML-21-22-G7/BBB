@@ -25,7 +25,7 @@ class RegressionEval:
                 X = X.to(DEVICE)
                 Y = Y.to(DEVICE)
 
-                pred_Y, _ = self.predict(X)
+                pred_Y, _, _ = self.predict(X)
 
                 total += self.batch_size
                 running_err += ((pred_Y - Y)*(pred_Y - Y)).sum().data

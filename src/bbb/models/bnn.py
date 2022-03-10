@@ -2,6 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Tuple, List
 
+import numpy as np
 import torch
 from torch import nn, optim, Tensor
 import torch.nn.functional as F
@@ -375,7 +376,11 @@ class RegressionBNN(RegressionEval, BaseBNN):
         # Determine the average and the variance of the samples
         mean, var = output.mean(dim=-1), output.var(dim=-1)
 
-        return mean, var
+        # Determine the quartiles
+        q = torch.tensor([0., 0.25, 0.75, 1.])
+        quartiles = torch.quantile(output, q, dim=-1)
+
+        return mean, var, quartiles
 
 class ClassificationBNN(ClassificationEval, BaseBNN):
     # NOTE: This class inherits from ClassificationEval and then BaseBNN
