@@ -56,7 +56,6 @@ class GaussianVarPost(nn.Module):
         return sample
 
     def log_prob(self, value):
-        # print(self.mu)
         log_prob = distributions.Normal(loc=self.mu, scale=self.sigma).log_prob(value)
         return log_prob
 
