@@ -44,8 +44,8 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     name = "BBB_regression",
     input_dim = 1,
     output_dim = 1,
-    weight_mu = 0.0,
-    weight_rho = 1.0,
+    weight_mu = [-0.2, 0.2],
+    weight_rho = [-5, -4],
     prior_params = PriorParameters(
         w_sigma=1.,
         b_sigma=1.,
@@ -57,19 +57,21 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     hidden_units = 400,
     hidden_layers = 4,
     batch_size = 100,
-    lr = 1e-3,
-    epochs = 2,
+    lr = 1e-1,
+    epochs = 100,
     elbo_samples = 5,
     inference_samples = 10,
     prior_type = PRIOR_TYPES.single,
     kl_reweighting_type = KL_REWEIGHTING_TYPES.simple,
-    vp_variance_type = VP_VARIANCE_TYPES.simple,
+    vp_variance_type = VP_VARIANCE_TYPES.paper,
     local_reparam_trick = True
 )
 
 def run_bbb_regression_training():
     logger.info('Beginning regression training...')
     net = RegressionBNN(params=BNN_REGRESSION_PARAMETERS).to(DEVICE)
+
+    logger.info(BNN_REGRESSION_PARAMETERS)
 
     X_train = generate_regression_data(train=True, size=10*BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
     X_val = generate_regression_data(train=False, size=BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
@@ -84,6 +86,9 @@ def run_bbb_regression_training():
 
 def run_bbb_regression_evaluation(model_path: str):
     logger.info(f'Beginning regression evaluation against {model_path}...')
+    
+    logger.info(BNN_REGRESSION_PARAMETERS)
+
     net = RegressionBNN(params=BNN_REGRESSION_PARAMETERS).to(DEVICE)
     net.load_saved(model_path=model_path)
     _bbb_regression_evaluation(net)

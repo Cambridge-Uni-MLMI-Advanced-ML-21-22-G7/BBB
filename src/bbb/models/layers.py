@@ -19,18 +19,18 @@ class GaussianVarPost(nn.Module):
         # Remember that it is these that we are going to learn.
         # TODO: ask @Max why we initialise these using uniform dist - where did he read about this?
         if dim_in == None: # bias tensor
-            mu_tensor = torch.Tensor(dim_out)
-            rho_tensor = torch.Tensor(dim_out)
+            mu_tensor = torch.Tensor(dim_out).uniform_(*mu)
+            rho_tensor = torch.Tensor(dim_out).uniform_(*rho)
         else:
             # Return torch.mm(input, w) + b  in fwd pass if using commented out lines
             # mu_tensor = torch.Tensor(dim_in, dim_out).uniform_(*mu)
             # rho_tensor = torch.Tensor(dim_in, dim_out).uniform_(*rho)
 
-            mu_tensor = torch.Tensor(dim_out, dim_in)
-            rho_tensor = torch.Tensor(dim_out, dim_in)
+            mu_tensor = torch.Tensor(dim_out, dim_in).uniform_(*mu)
+            rho_tensor = torch.Tensor(dim_out, dim_in).uniform_(*rho)
 
-        nn.init.constant_(mu_tensor, mu)
-        nn.init.constant_(rho_tensor, mu)
+        # nn.init.constant_(mu_tensor, mu)
+        # nn.init.constant_(rho_tensor, rho)
         self.mu = Parameter(mu_tensor)
         self.rho = Parameter(rho_tensor)
         self.vp_var_type = vp_var_type
