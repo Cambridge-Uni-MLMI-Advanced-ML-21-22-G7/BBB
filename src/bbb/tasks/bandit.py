@@ -49,21 +49,23 @@ class MushroomBandit(ABC):
         else:
             return 5 - reward
 
-    def init_buffer(self, X: torch.Tensor, y: torch.Tensor):
+    def init_buffer(self, x: torch.Tensor, y: torch.Tensor):
         self.bufferX = torch.empty(4096, 97).to(DEVICE)
         self.bufferY = torch.empty(4096, 1).to(DEVICE)
 
-        for i, idx in enumerate(np.random.choice(range(X.shape[0]), 4096)):
+        for i, idx in enumerate(np.random.choice(range(x.shape[0]), 4096)):
             eaten = 1 if np.random.rand() > 0.5 else 0
             action = [1, 0] if eaten else [0, 1]
-            self.bufferX[i] = torch.cat((X[idx],torch.Tensor(action)),-1)
+            self.bufferX[i] = torch.cat((x[idx],torch.Tensor(action).to(DEVICE)),-1)
             self.bufferY[i] = self.get_reward(eaten, y[idx])
         
     # function to get which mushrooms will be eaten
     def eat_mushrooms(self, X: torch.Tensor, y: torch.Tensor, mushroom_idx: int):
         context, poison = X[mushroom_idx], y[mushroom_idx]
-        try_eat = Var(np.concatenate((context, [1, 0])))
-        try_reject = Var(np.concatenate((context, [0, 1])))
+        # try_eat = Var(np.concatenate((context, [1, 0])))
+        # try_reject = Var(np.concatenate((context, [0, 1])))
+        try_eat = torch.cat((context,torch.Tensor([1, 0]).to(DEVICE)),-1)
+        try_reject = torch.cat((context,torch.Tensor([0, 1]).to(DEVICE)),-1)
 
         with torch.no_grad():
             r_eat = sum([self.net(try_eat) for _ in range(self.n_weight_sampling)]).item()
@@ -74,8 +76,8 @@ class MushroomBandit(ABC):
         # Get rewards and update buffer
         action = np.array([1, 0] if eaten else [0, 1])
         # Get rewards and add these to the buffer
-        self.bufferX = torch.vstack((self.bufferX, torch.cat((context,torch.Tensor(action)),-1)))
-        self.bufferY = torch.vstack((self.bufferY, torch.Tensor((agent_reward,))))
+        self.bufferX = torch.vstack((self.bufferX, torch.cat((context,torch.Tensor(action).to(DEVICE)),-1)))
+        self.bufferY = torch.vstack((self.bufferY, torch.Tensor((agent_reward,)).to(DEVICE)))
 
         # Calculate regret
         regret = self.calculate_regret(agent_reward,poison)
@@ -155,7 +157,7 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     epochs = 100,
     elbo_samples = 2,
     inference_samples = 10,
-    prior_type=PRIOR_TYPES.mixture,
+    prior_type=PRIOR_TYPES.single,
     kl_reweighting_type=KL_REWEIGHTING_TYPES.paper,
     vp_variance_type=VP_VARIANCE_TYPES.paper
 )
@@ -169,10 +171,12 @@ class BBB_bandit(MushroomBandit):
         self.optimizer = optim.SGD(self.net.model.parameters(), lr=lr)
         
     def loss_step(self, x, y, batch_id):
-        beta = 2 ** (64 - (batch_id + 1)) / (2 ** 64 - 1) 
+        beta = 2 ** (64 - (batch_id + 1)) / (2 ** 64 - 1)
+        beta = torch.Tensor((beta,)).to(DEVICE)
         self.net.model.train()
         self.net.zero_grad()
-        loss = self.net.sample_ELBO(x, y, beta, 2)
+        num_samples = 2
+        loss = self.net.sample_ELBO(x, y, beta,num_samples)
         net_loss = loss[0]
         net_loss.backward()
         self.optimizer.step()
