@@ -35,9 +35,9 @@ def _bbb_regression_evaluation(net: nn.Module, X_train: DataLoader = None, X_val
     X_val_arr = np.array(X_val.dataset, dtype=float)
 
     Y_val_pred_mean, Y_val_pred_var = net.predict(X_val.dataset[:][0])
-    Y_val_pred_mean, Y_val_pred_var = Y_val_pred_mean.detach().numpy().flatten(), torch.sqrt(Y_val_pred_var).detach().numpy().flatten()
+    Y_val_pred_mean, Y_val_pred_var = Y_val_pred_mean.detach().cpu().numpy().flatten(), torch.sqrt(Y_val_pred_var).detach().cpu().numpy().flatten()
 
-    plot_bbb_regression_predictions(X_train_arr=X_train_arr, X_val_arr=X_val_arr, Y_val_pred_mean=Y_val_pred_mean, Y_val_pred_var=Y_val_pred_var)
+    plot_bbb_regression_predictions(X_train_arr=X_train_arr, X_val_arr=X_val_arr, Y_val_pred_mean=Y_val_pred_mean, Y_val_pred_var=Y_val_pred_var, save_path=net.save_plot_path)
 
 
 BNN_REGRESSION_PARAMETERS = Parameters(
@@ -56,9 +56,9 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     ),
     hidden_units = 400,
     hidden_layers = 4,
-    batch_size = 100,
-    lr = 1e-1,
-    epochs = 100,
+    batch_size = 128,
+    lr = 1e-3,
+    epochs = 1000,
     elbo_samples = 5,
     inference_samples = 10,
     prior_type = PRIOR_TYPES.single,

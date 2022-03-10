@@ -5,7 +5,7 @@ from torch import Tensor
 import matplotlib.pyplot as plt
 
 
-def plot_bbb_regression_predictions(X_train_arr: Tensor, X_val_arr: Tensor, Y_val_pred_mean: Tensor, Y_val_pred_var: Tensor):
+def plot_bbb_regression_predictions(X_train_arr: Tensor, X_val_arr: Tensor, Y_val_pred_mean: Tensor, Y_val_pred_var: Tensor, save_path: str):
     """Plot the regression predictions made by BBB.
 
     :param X_train_arr: training data
@@ -27,6 +27,8 @@ def plot_bbb_regression_predictions(X_train_arr: Tensor, X_val_arr: Tensor, Y_va
     ax.legend()
     plt.show()
 
+    plt.savefig(save_path)
+
 
 def plot_weight_samples(weight_samples: List[Tensor]):
     """Plot a historgram of the passed weights.
@@ -37,7 +39,7 @@ def plot_weight_samples(weight_samples: List[Tensor]):
     fig, ax = plt.subplots(1, 1, figsize=(10,10))
 
     for i, weights in enumerate(weight_samples):
-        ax.hist(weights.flatten().detach().numpy(), density=True, alpha=0.5, label=f'Layer: {i}, Weights: {weights.shape[0]}')
+        ax.hist(weights.flatten().detach().cpu().numpy(), density=True, alpha=0.5, label=f'Layer: {i}, Weights: {weights.shape[0]}')
     
     ax.legend()
     ax.set_xlabel('Weight Value')

@@ -79,7 +79,7 @@ class DNN(RegressionEval, BaseModel):
             self.optimizer.step()
 
         # Record the loss
-        self.loss_hist.append(loss)
+        self.loss_hist.append(loss.item())
             
         return loss
 
