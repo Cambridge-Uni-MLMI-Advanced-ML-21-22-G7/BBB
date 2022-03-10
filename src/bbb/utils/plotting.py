@@ -5,7 +5,14 @@ from torch import Tensor
 import matplotlib.pyplot as plt
 
 
-def plot_bbb_regression_predictions(X_train_arr: Tensor, X_val_arr: Tensor, Y_val_pred_mean: Tensor, Y_val_pred_var: Tensor, save_path: str):
+def plot_bbb_regression_predictions(
+    X_train_arr: Tensor,
+    X_val_arr: Tensor,
+    Y_val_pred_mean: Tensor,
+    Y_val_pred_var: Tensor,
+    Y_val_pred_quartiles: np.array,
+    save_path: str
+):
     """Plot the regression predictions made by BBB.
 
     :param X_train_arr: training data
@@ -30,10 +37,10 @@ def plot_bbb_regression_predictions(X_train_arr: Tensor, X_val_arr: Tensor, Y_va
     # ax.fill_between(X_val_arr[:,0], Y_val_pred_mean-2*np.sqrt(Y_val_pred_var), Y_val_pred_mean+2*np.sqrt(Y_val_pred_var), alpha=0.5)
 
     # 0th and 100th percentile
-    ax.fill_between(X_val_arr[:,0], np.percentile(Y_val_pred_mean, 0, axis=0), np.percentile(Y_val_pred_mean, 100, axis=0), alpha=0.25)
+    ax.fill_between(X_val_arr[:,0], Y_val_pred_quartiles[0,:], Y_val_pred_quartiles[3,:], color='tab:blue', alpha=0.25)
     
     # 25th and 75th percentile
-    ax.fill_between(X_val_arr[:,0], np.percentile(Y_val_pred_mean, 25, axis=0), np.percentile(Y_val_pred_mean, 75, axis=0), alpha=0.25)
+    ax.fill_between(X_val_arr[:,0], Y_val_pred_quartiles[1,:], Y_val_pred_quartiles[2,:], color='tab:orange', alpha=0.50)
 
     # Formatting of plot    
     ax.legend()
