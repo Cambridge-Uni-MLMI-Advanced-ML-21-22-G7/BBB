@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import datetime
 
 import torch
@@ -35,6 +36,11 @@ class BaseModel(torch.nn.Module):
         self.save_loss_path = os.path.join(self.model_save_dir, f'loss.npy')
         self.save_eval_metric_path = os.path.join(self.model_save_dir, f'eval_metric.npy')
         self.save_plot_path = os.path.join(self.model_save_dir, f'plot.png')
+
+        # Save the parameters used to run the model
+        self.save_params_path = os.path.join(self.model_save_dir, f'params.txt')
+        with open(self.save_params_path, 'w') as f:
+            json.dump(params.__dict__, f, default=lambda o: o.__dict__, indent=4)
 
         # Details for saving metrics to tensorboard during training
         self.save_tensorboard_path = os.path.join(params.tensorboard_save_dir, f'{params.name}_{self.init_time_str}.pt')
