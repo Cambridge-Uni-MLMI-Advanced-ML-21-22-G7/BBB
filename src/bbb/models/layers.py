@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 import torch
 from torch import nn, distributions, Tensor
@@ -70,8 +71,8 @@ class BaseBFC(nn.Module):
         self,
         dim_in: int, 
         dim_out: int,
-        weight_mu: float,
-        weight_rho: float,
+        weight_mu_range: List[float],
+        weight_rho_range: List[float],
         prior_params: PriorParameters,
         prior_type: int,
         vp_var_type: int,
@@ -80,8 +81,8 @@ class BaseBFC(nn.Module):
         
         # Create IN X OUT weight tensor that we can sample from
         # This is the variational posterior over the weights
-        self.w_var_post = GaussianVarPost(weight_mu, weight_rho, dim_in=dim_in, dim_out=dim_out, vp_var_type=vp_var_type)
-        self.b_var_post = GaussianVarPost(weight_mu, weight_rho, dim_out=dim_out, vp_var_type=vp_var_type)
+        self.w_var_post = GaussianVarPost(weight_mu_range, weight_rho_range, dim_in=dim_in, dim_out=dim_out, vp_var_type=vp_var_type)
+        self.b_var_post = GaussianVarPost(weight_mu_range, weight_rho_range, dim_out=dim_out, vp_var_type=vp_var_type)
 
         # Set Prior distribution over the weights and biases
         assert prior_params.w_sigma and prior_params.b_sigma  # Assert that minimum required prior parameters are present
@@ -130,8 +131,8 @@ class BFC(BaseBFC):
         self,
         dim_in: int, 
         dim_out: int,
-        weight_mu: float,
-        weight_rho: float,
+        weight_mu_range: List[float],
+        weight_rho_range: List[float],
         prior_params: PriorParameters,
         prior_type: int,
         vp_var_type: int,
@@ -139,8 +140,8 @@ class BFC(BaseBFC):
         super().__init__(
             dim_in=dim_in,
             dim_out=dim_out,
-            weight_mu=weight_mu,
-            weight_rho=weight_rho,
+            weight_mu_range=weight_mu_range,
+            weight_rho_range=weight_rho_range,
             prior_params=prior_params,
             prior_type=prior_type,
             vp_var_type=vp_var_type
@@ -183,8 +184,8 @@ class BFC_LRT(nn.Module):
         self,
         dim_in: int, 
         dim_out: int,
-        weight_mu: float,
-        weight_rho: float,
+        weight_mu_range: List[float],
+        weight_rho_range: List[float],
         prior_params: PriorParameters,
         prior_type: int,
         vp_var_type: int,
@@ -197,8 +198,8 @@ class BFC_LRT(nn.Module):
         super().__init__(
             dim_in=dim_in,
             dim_out=dim_out,
-            weight_mu=weight_mu,
-            weight_rho=weight_rho,
+            weight_mu_range=weight_mu_range,
+            weight_rho_range=weight_rho_range,
             prior_params=prior_params,
             prior_type=prior_type,
             vp_var_type=vp_var_type

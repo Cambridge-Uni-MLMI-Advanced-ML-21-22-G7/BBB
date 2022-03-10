@@ -32,8 +32,8 @@ class BaseBNN(BaseModel, ABC):
         self.hidden_units = params.hidden_units
         self.hidden_layers = params.hidden_layers
         self.output_dim = params.output_dim
-        self.weight_mu = params.weight_mu
-        self.weight_rho = params.weight_rho
+        self.weight_mu_range = params.weight_mu_range
+        self.weight_rho_range = params.weight_rho_range
         self.prior_params = params.prior_params
         self.elbo_samples = params.elbo_samples
         self.inference_samples = params.inference_samples
@@ -53,8 +53,8 @@ class BaseBNN(BaseModel, ABC):
 
         # BFC argument dict
         bfc_arguments = {
-            "weight_mu": self.weight_mu,
-            "weight_rho": self.weight_rho,
+            "weight_mu_range": self.weight_mu_range,
+            "weight_rho_range": self.weight_rho_range,
             "prior_params": self.prior_params,
             "prior_type": self.prior_type,
             "vp_var_type": self.vp_variance_type
