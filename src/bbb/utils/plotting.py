@@ -17,16 +17,31 @@ def plot_bbb_regression_predictions(X_train_arr: Tensor, X_val_arr: Tensor, Y_va
     :param Y_val_pred_var: variance of predictions
     :type Y_val_pred_var: Tensor
     """
+    # Initialise the figure
     fig, ax = plt.subplots(1, 1, figsize=(10,10))
 
-    ax.plot(X_train_arr[:,0], X_train_arr[:,1], label='Original')
+    # Plot the data points
+    ax.plot(X_train_arr[:,0], X_train_arr[:,1], label='Original', ls='', marker='x')
     
+    # Plot the predictive mean
     ax.plot(X_val_arr[:,0], Y_val_pred_mean, marker='x', label='Prediction')
-    ax.fill_between(X_val_arr[:,0], Y_val_pred_mean-2*np.sqrt(Y_val_pred_var), Y_val_pred_mean+2*np.sqrt(Y_val_pred_var), alpha=0.5)
+
+    # Two standard deviations
+    # ax.fill_between(X_val_arr[:,0], Y_val_pred_mean-2*np.sqrt(Y_val_pred_var), Y_val_pred_mean+2*np.sqrt(Y_val_pred_var), alpha=0.5)
+
+    # 0th and 100th percentile
+    ax.fill_between(X_val_arr[:,0], np.percentile(Y_val_pred_mean, 0, axis=0), np.percentile(Y_val_pred_mean, 100, axis=0), alpha=0.25)
     
+    # 25th and 75th percentile
+    ax.fill_between(X_val_arr[:,0], np.percentile(Y_val_pred_mean, 25, axis=0), np.percentile(Y_val_pred_mean, 75, axis=0), alpha=0.25)
+
+    # Formatting of plot    
     ax.legend()
+
+    # Display the plot
     plt.show()
 
+    # Save the figure
     plt.savefig(save_path)
 
 
