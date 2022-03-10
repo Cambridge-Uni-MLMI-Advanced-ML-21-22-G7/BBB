@@ -82,6 +82,9 @@ class CNN(ClassificationEval, BaseModel):
             
             loss.backward()
             self.optimizer.step()
+
+        # Record the loss
+        self.loss_hist.append(loss)
             
         return loss
 

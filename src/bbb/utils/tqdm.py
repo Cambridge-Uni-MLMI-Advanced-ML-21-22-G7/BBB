@@ -65,3 +65,7 @@ def train_with_tqdm(net: nn.Module, train_data: Tensor, epochs: int, eval_data: 
                 if net.early_stopping and np.abs(loss.item() - prev_loss) < net.early_stopping_thresh:
                     logger.warn(f'Early stopping at epoch {e_num+1} as the absolute loss difference between the previous run and the current was less than {net.early_stopping_thresh}')
                     break
+
+    # Save the loss history and evaluation metric
+    np.save(net.save_loss_path, np.array(net.loss_hist))
+    np.save(net.save_eval_metric_path, np.array(net.eval_metric_hist))
