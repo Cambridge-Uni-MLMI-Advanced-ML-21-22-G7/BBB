@@ -22,8 +22,8 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     output_dim = 10,
     hidden_units = 1200,
     hidden_layers=3,
-    weight_mu = [-0.2, 0.2],
-    weight_rho = [-5, -4],
+    weight_mu_range = [-0.2, 0.2],
+    weight_rho_range = [-5, -4],
     prior_params = PriorParameters(
         w_sigma=1,
         b_sigma=2,
@@ -33,9 +33,9 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     epochs = 300,
     elbo_samples = 2,
     inference_samples = 10,
-    prior_type=PRIOR_TYPES.single,
-    kl_reweighting_type=KL_REWEIGHTING_TYPES.simple,
-    vp_variance_type=VP_VARIANCE_TYPES.simple
+    prior_type = PRIOR_TYPES.single,
+    kl_reweighting_type = KL_REWEIGHTING_TYPES.simple,
+    vp_variance_type = VP_VARIANCE_TYPES.simple
 )
 
 def run_bbb_mnist_classification_training():

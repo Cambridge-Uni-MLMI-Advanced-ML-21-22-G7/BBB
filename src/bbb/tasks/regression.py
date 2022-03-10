@@ -44,8 +44,8 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     name = "BBB_regression",
     input_dim = 1,
     output_dim = 1,
-    weight_mu = [-0.2, 0.2],
-    weight_rho = [-5, -4],
+    weight_mu_range = [-0.2, 0.2],
+    weight_rho_range = [-5, -4],
     prior_params = PriorParameters(
         w_sigma=1.,
         b_sigma=1.,
@@ -61,9 +61,10 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     epochs = 100,
     elbo_samples = 5,
     inference_samples = 10,
-    prior_type=PRIOR_TYPES.mixture,
-    kl_reweighting_type=KL_REWEIGHTING_TYPES.simple,
-    vp_variance_type=VP_VARIANCE_TYPES.simple
+    prior_type = PRIOR_TYPES.single,
+    kl_reweighting_type = KL_REWEIGHTING_TYPES.simple,
+    vp_variance_type = VP_VARIANCE_TYPES.simple,
+    local_reparam_trick = True
 )
 
 def run_bbb_regression_training():
@@ -121,8 +122,8 @@ DNN_REGRESSION_PARAMETERS = Parameters(
     batch_size = 100,
     lr = 1e-3,
     epochs = 100,
-    early_stopping=False,
-    early_stopping_thresh=1e-4
+    early_stopping = False,
+    early_stopping_thresh = 1e-4
 )
 
 def run_dnn_regression_training():

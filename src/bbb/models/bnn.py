@@ -8,10 +8,10 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from bbb.utils.pytorch_setup import DEVICE
-from bbb.config.constants import KL_REWEIGHTING_TYPES
+from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES
 from bbb.config.parameters import Parameters
 from bbb.models.base import BaseModel
-from bbb.models.layers import BFC
+from bbb.models.layers import BFC, BFC_LRT
 from bbb.models.evaluation import RegressionEval, ClassificationEval
 
 
@@ -32,8 +32,8 @@ class BaseBNN(BaseModel, ABC):
         self.hidden_units = params.hidden_units
         self.hidden_layers = params.hidden_layers
         self.output_dim = params.output_dim
-        self.weight_mu = params.weight_mu
-        self.weight_rho = params.weight_rho
+        self.weight_mu_range = params.weight_mu_range
+        self.weight_rho_range = params.weight_rho_range
         self.prior_params = params.prior_params
         self.elbo_samples = params.elbo_samples
         self.inference_samples = params.inference_samples
@@ -42,11 +42,19 @@ class BaseBNN(BaseModel, ABC):
         self.prior_type = params.prior_type
         self.kl_reweighting_type = params.kl_reweighting_type
         self.vp_variance_type = params.vp_variance_type
+        self.local_reparam_trick = params.local_reparam_trick
+
+        # If using local reparameterisation trick the prior must be Gaussian
+        # This is due to the exact calculation of the KL divergence
+        # KL(q(w|thetat)||p(w))
+        if self.local_reparam_trick:
+            assert self.prior_type == PRIOR_TYPES.single
+
 
         # BFC argument dict
         bfc_arguments = {
-            "weight_mu": self.weight_mu,
-            "weight_rho": self.weight_rho,
+            "weight_mu_range": self.weight_mu_range,
+            "weight_rho_range": self.weight_rho_range,
             "prior_params": self.prior_params,
             "prior_type": self.prior_type,
             "vp_var_type": self.vp_variance_type
@@ -138,6 +146,23 @@ class BaseBNN(BaseModel, ABC):
 
         return log_posterior
 
+    def kl_d(self) -> float:
+        """Calculate the KL divergence: KL(q(w|theta)||p(w)).
+        This is the divergence between the prior and variational posterior.
+
+        :return: the KL divergence
+        :rtype: float
+        """
+        # This should only be run for the local reparameterisation trick
+        assert self.local_reparam_trick
+
+        kl_d = 0
+        for layer in self.model:
+            if isinstance(layer, BFC_LRT):
+                kl_d += layer.kl_d
+
+        return kl_d
+
     @abstractmethod
     def get_nll(self, outputs: torch.Tensor, targets: torch.Tensor) -> float:
         """Calculate the negative log likelihood; log P(D|w). This is task
@@ -195,6 +220,43 @@ class BaseBNN(BaseModel, ABC):
         
         return elbo, log_prior, log_variational_posterior, nll
 
+    def sample_ELBO_lrt(self, X: Tensor, Y: Tensor, pi: float, num_samples: int) -> float:
+        """Run X through the (sampled) model <num_samples> times. This uses the local
+        reparameterisation trick.
+        
+        pi is the KL re-weighting factor used in section 3.4.
+
+        :param X: features
+        :type X: Tensor
+        :param Y: ground-truth/labels/targets
+        :type Y: Tensor
+        :param pi: weighting to use in KL reweighting
+        :type pi: float
+        :param num_samples: number of samples to use to estimate expectation
+        :type num_samples: int
+        :return: ELBO, log prior, log variational posterior and negative log likelihood
+        :rtype: Tuple[float, float, float, float]
+        """
+        # Ensure that this method is not being accidentally called from the wrong place
+        if not self.local_reparam_trick:
+            raise RuntimeError("Free energy calculation applies to local reparameterisation trick only")
+        
+        # Determine the mean negative log-likelihood over a range of activation samples
+        nlls = torch.zeros(num_samples).to(DEVICE)
+        for i in range(num_samples):
+            preds = self.forward(X)
+            nlls[i] = self.get_nll(preds, Y)
+        nll = nlls.mean()
+        
+        # The KL divergence is constant
+        kl_d = self.kl_d()
+
+        # Compute an estimate of ELBO
+        # section 3.4 for pi description
+        # pi should not be applied to the NLL
+        elbo = pi*kl_d + nll
+
+        return elbo
 
     def train(self, train_data: DataLoader) -> float:
         """Single epoch of training.
@@ -223,12 +285,16 @@ class BaseBNN(BaseModel, ABC):
 
             self.zero_grad()
 
-            (
-                batch_elbo, batch_log_prior, batch_log_var_post, batch_nll
-            ) = self.sample_ELBO(X, Y, pi, self.elbo_samples)
-            
-            batch_elbo.backward()
-            self.optimizer.step()
+            # Call the appropriate method for determining the sample ELBO
+            if self.local_reparam_trick:
+                batch_elbo = self.sample_ELBO_lrt(X, Y, pi, self.elbo_samples)
+            else:
+                (
+                    batch_elbo, batch_log_prior, batch_log_var_post, batch_nll
+                ) = self.sample_ELBO(X, Y, pi, self.elbo_samples)
+
+        batch_elbo.backward()
+        self.optimizer.step()
 
         # Return the ELBO figure of the final batch as a representative example
         return batch_elbo.item()
