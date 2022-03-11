@@ -104,12 +104,12 @@ class BaseBFC(nn.Module):
             assert all((prior_params.w_sigma_2, prior_params.b_sigma_2, prior_params.w_mixture_weight, prior_params.b_mixture_weight))
 
             # Specify the desired weights
-            w_mix = distributions.Categorical(torch.tensor((prior_params.w_mixture_weight, 1-prior_params.w_mixture_weight)))
-            b_mix = distributions.Categorical(torch.tensor((prior_params.b_mixture_weight, 1-prior_params.b_mixture_weight)))
+            w_mix = distributions.Categorical(torch.tensor((prior_params.w_mixture_weight, 1-prior_params.w_mixture_weight), device=DEVICE))
+            b_mix = distributions.Categorical(torch.tensor((prior_params.b_mixture_weight, 1-prior_params.b_mixture_weight), device=DEVICE))
 
             # Specify the individual components - whilst these appear to be multivariate Gaussians they will be seperated
-            w_norm_comps = distributions.Normal(torch.zeros(2), torch.tensor((prior_params.w_sigma, prior_params.w_sigma_2), dtype=torch.float32))
-            b_norm_comps = distributions.Normal(torch.zeros(2), torch.tensor((prior_params.b_sigma, prior_params.b_sigma_2), dtype=torch.float32))
+            w_norm_comps = distributions.Normal(torch.zeros(2, device=DEVICE), torch.tensor((prior_params.w_sigma, prior_params.w_sigma_2), device=DEVICE, dtype=torch.float32))
+            b_norm_comps = distributions.Normal(torch.zeros(2, device=DEVICE), torch.tensor((prior_params.b_sigma, prior_params.b_sigma_2), device=DEVICE, dtype=torch.float32))
 
             # Create the GMMs
             self.w_prior = distributions.MixtureSameFamily(w_mix, w_norm_comps)
