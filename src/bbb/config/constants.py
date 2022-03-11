@@ -4,7 +4,7 @@ from dataclasses import dataclass
 # Directories for saving training artifacts
 MODEL_SAVE_DIR = './saved_models'
 TENSORBOARD_SAVE_DIR = './tensorboard'
-MUSHROOM_DATASET_PATH = '/homes/yw575/AML/BBB/data/mushroom.csv'
+MUSHROOM_DATASET_PATH = './data/mushroom.csv'
 
 @dataclass
 class _KlReweightingTypes:

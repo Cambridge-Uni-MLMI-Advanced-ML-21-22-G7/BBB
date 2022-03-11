@@ -17,8 +17,7 @@ from bbb.data import load_bandit
 
 
 logger = logging.getLogger(__name__)
-Var = lambda x, dtype=torch.FloatTensor: Variable(
-    torch.from_numpy(x).type(dtype)).to(DEVICE)
+
 
 # coding a class for this
 class MushroomBandit(ABC):
@@ -71,12 +70,14 @@ class MushroomBandit(ABC):
             r_eat = sum([self.net(try_eat) for _ in range(self.n_weight_sampling)]).item()
             r_reject = sum([self.net(try_reject) for _ in range(self.n_weight_sampling)]).item()
         eaten = r_eat > r_reject
+
         if np.random.rand()<self.epsilon:
             eaten = (np.random.rand()<.5)
         agent_reward = self.get_reward(eaten, poison)
 
         # Get rewards and update buffer
         action = np.array([1, 0] if eaten else [0, 1])
+
         # Get rewards and add these to the buffer
         self.bufferX = torch.vstack((self.bufferX, torch.cat((context,torch.Tensor(action).to(DEVICE)),-1)))
         self.bufferY = torch.vstack((self.bufferY, torch.Tensor((agent_reward,)).to(DEVICE)))

@@ -45,10 +45,8 @@ def load_bandit() -> Tuple[torch.Tensor, torch.Tensor]:
     def df_to_tensor(df):
         return torch.from_numpy(df.values).float().to(DEVICE)
 
-    # X = torch.Tensor(X.copy().values, device=DEVICE)
     X = df_to_tensor(X.copy())
     y = df_to_tensor(y.copy()).unsqueeze(-1)
-    # y = torch.Tensor(y.copy().values, device=DEVICE).unsqueeze(-1)
 
     return X,y
 
