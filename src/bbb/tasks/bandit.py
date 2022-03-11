@@ -1,3 +1,4 @@
+import os
 import logging
 from abc import ABC, abstractmethod
 
@@ -10,7 +11,9 @@ from torch.autograd import Variable
 
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.config.parameters import Parameters, PriorParameters
-from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES
+from bbb.config.constants import (
+    KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES, PLOTS_DIR
+)
 from bbb.models.dnn import DNN
 from bbb.models.bnn import BanditBNN
 from bbb.data import load_bandit
@@ -224,7 +227,15 @@ def run_rl_training():
     ax.set_ylabel('Regret') 
     ax.legend()
 
-    plt.savefig(str(NB_STEPS)+'_bandit_v1.jpg')
+    # Create the directory for storing plots, if it does not already exist
+    plot_dir = os.path.join(PLOTS_DIR, 'rl')
+    if not os.path.isdir(plot_dir):
+        os.makedirs(plot_dir)
+
+    # Save the plot
+    plt.savefig(os.path.join(plot_dir, str(NB_STEPS)+'_bandit_v1.jpg'))
+
+    # Show the plot
     plt.show()
 
 
