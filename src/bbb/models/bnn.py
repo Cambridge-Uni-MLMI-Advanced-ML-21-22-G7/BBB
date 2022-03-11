@@ -431,7 +431,8 @@ class BanditBNN(RegressionEval, BaseBNN):
         
         TODO: confirm we want this.
         """
-        return 0
+        # return 0
+        return -torch.distributions.Normal(outputs, 1.0).log_prob(targets).sum()
 
     def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
         # Put model into evaluation mode
