@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 # coding a class for this
 class MushroomBandit(ABC):
     # initializing
-    def __init__(self, X, y,n_weight_sampling=2):
+    def __init__(self, n_weight_sampling=2):
         self.epsilon = 0
         self.net = None
         self.loss = None
@@ -125,21 +125,19 @@ DNN_REGRESSION_PARAMETERS = Parameters(
 
 # Class for Greedy agents
 class Greedy(MushroomBandit):
-    def __init__(self, epsilon=0, lr=2e-5, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, epsilon=0):
+        super().__init__()
         self.n_weight_sampling = 1
         self.epsilon = epsilon
         self.net = DNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
-        self.optimizer = optim.SGD(self.net.parameters(), lr=lr)
         self.criterion = torch.nn.MSELoss()
         
     def loss_step(self, x, y, batch_id):
-        
         self.net.zero_grad()
         preds = self.net.forward(x)
         loss = self.criterion(preds, y)
         loss.backward()
-        self.optimizer.step()
+        self.net.optimizer.step()
         return loss
 
 BNN_REGRESSION_PARAMETERS = Parameters(
@@ -170,11 +168,10 @@ BNN_REGRESSION_PARAMETERS = Parameters(
 
 # Class for BBB agents
 class BBB_bandit(MushroomBandit):
-    def __init__(self, lr=2e-5, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self):
+        super().__init__()
         self.n_weight_sampling = 1
         self.net = BanditBNN(params=BNN_REGRESSION_PARAMETERS).to(DEVICE)
-        self.optimizer = optim.SGD(self.net.model.parameters(), lr=lr)
         
     def loss_step(self, x, y, batch_id):
         beta = 2 ** (64 - (batch_id + 1)) / (2 ** 64 - 1)
@@ -185,7 +182,7 @@ class BBB_bandit(MushroomBandit):
         loss = self.net.sample_ELBO(x, y, beta,num_samples)
         net_loss = loss[0]
         net_loss.backward()
-        self.optimizer.step()
+        self.net.optimizer.step()
         return net_loss.item()
 
 
@@ -194,12 +191,11 @@ def run_rl_training():
     X, y = load_bandit()
 
     # Define settings
-    lr=1e-5
     mnets = {
-        # 'Greedy':Greedy(X=X, y=y, lr=lr, epsilon=0),
-        # 'Greedy 1%':Greedy(X=X, y=y, lr=lr, epsilon=0.01),
-        # 'Greedy 5%':Greedy(X=X, y=y, lr=lr, epsilon=0.05),
-        'BBB':BBB_bandit(X=X, y=y, lr=lr)
+        # 'Greedy':Greedy(epsilon=0),
+        # 'Greedy 1%':Greedy(epsilon=0.01),
+        # 'Greedy 5%':Greedy(epsilon=0.05),
+        'BBB':BBB_bandit()
     }
 
     NB_STEPS = 10000
