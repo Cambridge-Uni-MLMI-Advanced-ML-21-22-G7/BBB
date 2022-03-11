@@ -71,6 +71,8 @@ class MushroomBandit(ABC):
             r_eat = sum([self.net(try_eat) for _ in range(self.n_weight_sampling)]).item()
             r_reject = sum([self.net(try_reject) for _ in range(self.n_weight_sampling)]).item()
         eaten = r_eat > r_reject
+        if np.random.rand()<self.epsilon:
+            eaten = (np.random.rand()<.5)
         agent_reward = self.get_reward(eaten, poison)
 
         # Get rewards and update buffer
