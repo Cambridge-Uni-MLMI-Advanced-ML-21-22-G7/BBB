@@ -15,7 +15,7 @@ class RegressionEval:
 
     def evaluate(self, test_data: DataLoader) -> float:
         # Put model in evaluation mode
-        self.model.eval()
+        self.eval()
 
         running_err = 0
         total = 0
@@ -47,7 +47,7 @@ class ClassificationEval:
 
     def evaluate(self, test_data: DataLoader) -> float:
         # Put model in evaluation mode
-        self.model.eval()
+        self.eval()
 
         correct = 0
         total = 0

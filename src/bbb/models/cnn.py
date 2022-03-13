@@ -54,7 +54,7 @@ class CNN(ClassificationEval, BaseModel):
     
         # Optimizer
         self.optimizer = optim.Adam(
-            self.model.parameters(),
+            self.parameters(),
             lr=self.lr
         )
 
@@ -67,9 +67,9 @@ class CNN(ClassificationEval, BaseModel):
     def forward(self, X: Tensor) -> Tensor:
         return self.model.forward(X)
 
-    def train(self, train_data: DataLoader) -> float:
+    def train_step(self, train_data: DataLoader) -> float:
         # Put model into training mode
-        self.model.train()
+        self.train()
 
         # Loop through the training data
         for _, (inputs, labels) in enumerate(train_data):
@@ -90,7 +90,7 @@ class CNN(ClassificationEval, BaseModel):
 
     def predict(self, X: Tensor) -> Union[Tensor, Tensor]:
         # Put model into evaluation mode
-        self.model.eval()
+        self.eval()
 
         # Pass the input through the model
         output = self.forward(X)
