@@ -33,8 +33,8 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     elbo_samples = 2,
     inference_samples = 10,
     prior_type = PRIOR_TYPES.single,
-    kl_reweighting_type = KL_REWEIGHTING_TYPES.simple,
-    vp_variance_type = VP_VARIANCE_TYPES.simple
+    kl_reweighting_type = KL_REWEIGHTING_TYPES.paper,
+    vp_variance_type = VP_VARIANCE_TYPES.paper
 )
 
 def run_bbb_mnist_classification_training():
