@@ -24,17 +24,17 @@ logger = logging.getLogger(__name__)
 #############
 
 def _bbb_regression_evaluation(net: nn.Module, X_train: DataLoader = None, X_val: DataLoader = None):
-    # if X_train is None or X_val is None:
-    #     X_train = generate_regression_data(train=True, size=8*BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
-    #     X_val = generate_regression_data(train=False, size=BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
+    if X_train is None or X_val is None:
+        X_train = generate_regression_data(train=True, size=8*BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
+        X_val = generate_regression_data(train=False, size=BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
 
-    # rmse = net.evaluate(X_val)
-    # logger.info(f'RMSE: {rmse}')
+    rmse = net.evaluate(X_val)
+    logger.info(f'RMSE: {rmse}')
 
     X_train_arr = np.array(X_train.dataset, dtype=float)
-    X_val_arr = np.array(X_val, dtype=float)
+    X_val_arr = np.array(X_val.dataset, dtype=float)
 
-    Y_val_pred_mean, Y_val_pred_var, Y_val_pred_quartiles = net.predict(X_val)
+    Y_val_pred_mean, Y_val_pred_var, Y_val_pred_quartiles = net.predict(X_val.dataset[:][0])
     Y_val_pred_mean, Y_val_pred_var, Y_val_pred_quartiles = (
         Y_val_pred_mean.detach().cpu().numpy().flatten(),
         Y_val_pred_var.detach().cpu().numpy().flatten(),
@@ -91,15 +91,10 @@ def run_bbb_regression_training():
 
     train_with_tqdm(net=net, train_data=X_train, eval_data=X_val, epochs=BNN_REGRESSION_PARAMETERS.epochs)
 
-    # weight_samples = net.weight_samples()
-    # plot_weight_samples(weight_samples)
+    weight_samples = net.weight_samples()
+    plot_weight_samples(weight_samples)
 
-    X_test = torch.linspace(-2., 2, 400).reshape(-1, 1)
-    _bbb_regression_evaluation(net, X_train=X_train, X_val=X_test)
-
-    # regression_trainer = RegressionTrainer()
-    # X_train = generate_regression_data(train=True, size=8*BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
-    # regression_trainer.train_step(X_train)
+    _bbb_regression_evaluation(net, X_train=X_train, X_val=X_val)
 
 
 def run_bbb_regression_evaluation(model_path: str):

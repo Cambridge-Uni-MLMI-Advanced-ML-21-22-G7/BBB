@@ -354,7 +354,7 @@ class RegressionBNN(RegressionEval, BaseBNN):
     def __init__(self, params: Parameters) -> None:
         super().__init__(params=params)
         
-        # Asser that regression_likelihood_noise has been provided
+        # Assert that regression_likelihood_noise has been provided
         assert type(params.regression_likelihood_noise) == float
 
         self.regression_likelihood_noise = params.regression_likelihood_noise
