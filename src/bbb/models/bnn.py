@@ -85,7 +85,7 @@ class BaseBNN(BaseModel, ABC):
 
         # Optimizer
         self.optimizer = optim.Adam(
-            self.model.parameters(),
+            self.parameters(),
             lr=self.lr
         )
 
@@ -259,7 +259,7 @@ class BaseBNN(BaseModel, ABC):
 
         return elbo
 
-    def train(self, train_data: DataLoader) -> float:
+    def train_step(self, train_data: DataLoader) -> float:
         """Single epoch of training.
 
         :param train_data: training data
@@ -269,7 +269,10 @@ class BaseBNN(BaseModel, ABC):
         :rtype: float
         """
         # Put model in training mode
-        self.model.train()
+        self.train()
+
+        # Determine the number of batches
+        num_batches = len(train_data)
 
         # Loop through the training data
         for idx, (X, Y) in enumerate(train_data):
@@ -278,9 +281,9 @@ class BaseBNN(BaseModel, ABC):
             # Calculate pi according to the chosen method
             # Note that the method presented in the paper requires idx
             if self.kl_reweighting_type == KL_REWEIGHTING_TYPES.simple:
-                pi = 1/len(train_data)
+                pi = 1/num_batches
             elif self.kl_reweighting_type == KL_REWEIGHTING_TYPES.paper:
-                pi = 2 ** (len(train_data) - (idx + 1)) / (2 ** len(train_data) - 1)
+                pi = 2 ** (num_batches - (idx + 1)) / (2 ** num_batches - 1)
             else:
                 raise RuntimeError(f'Unrecognised KL re-weighting type: {self.kl_reweighting_type}')
 
@@ -310,7 +313,7 @@ class BaseBNN(BaseModel, ABC):
         :rtype: List[Tensor]
         """
         # Put model into evaluation mode
-        self.model.eval()
+        self.eval()
 
         # Initialise list of tensors to hold weight samples
         # Each tensor will hold samples of weights from a single layer
@@ -339,7 +342,7 @@ class BaseBNN(BaseModel, ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def eval(self, test_data: DataLoader):
+    def evaluate(self, test_data: DataLoader):
         """Abstract method: evaluation depends on the task.
 
         :param test_data: data to run evaluation against
@@ -352,19 +355,27 @@ class RegressionBNN(RegressionEval, BaseBNN):
     # NOTE: This class inherits from RegressionEval and then BaseBNN
     # The order here is important
 
+    def __init__(self, params: Parameters) -> None:
+        super().__init__(params=params)
+        
+        # Assert that regression_likelihood_noise has been provided
+        assert type(params.regression_likelihood_noise) == float
+
+        self.regression_likelihood_noise = params.regression_likelihood_noise
+
     def get_nll(self, outputs: torch.Tensor, targets: torch.Tensor) -> float:
         """Calculation of NLL assuming noise with zero mean and unit variance.
         
         TODO: confirm we want this.
         """
-        return -torch.distributions.Normal(outputs, 1.0).log_prob(targets).sum()
+        return -torch.distributions.Normal(outputs, self.regression_likelihood_noise).log_prob(targets).sum()
 
     def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
         # Ensure tensor is assigned to correct device
         X = X.to(DEVICE)
 
         # Put model into evaluation mode
-        self.model.eval()
+        self.eval()
 
         # Initialise tensor to hold predictions
         output = torch.zeros(size=[len(X), self.output_dim, self.inference_samples]).to(DEVICE)
@@ -402,7 +413,7 @@ class ClassificationBNN(ClassificationEval, BaseBNN):
 
     def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
         # Put model into evaluation mode
-        self.model.eval()
+        self.eval()
 
         # Initialise tensor to hold class probabilities
         probs = torch.zeros(size=[len(X), self.output_dim])
@@ -436,7 +447,7 @@ class BanditBNN(RegressionEval, BaseBNN):
 
     def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
         # Put model into evaluation mode
-        self.model.eval()
+        self.eval()
 
         # Initialise tensor to hold predictions
         output = torch.zeros(size=[len(X), self.output_dim, self.inference_samples]).to(DEVICE)

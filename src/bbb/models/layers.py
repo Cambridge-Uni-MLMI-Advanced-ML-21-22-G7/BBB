@@ -35,6 +35,7 @@ class GaussianVarPost(nn.Module):
         self.mu = Parameter(mu_tensor)
         self.rho = Parameter(rho_tensor)
         self.vp_var_type = vp_var_type
+        self.std_normal = distributions.Normal(0,1)
 
     @property
     def sigma(self):
@@ -55,7 +56,7 @@ class GaussianVarPost(nn.Module):
         for each datapoint). The local reparameterisation trick seeks to get around this by sampling
         activations conditional on the datapoints, rather than sampling weights.
         """
-        epsilon = distributions.Normal(0,1).sample(self.rho.size()).to(DEVICE)
+        epsilon = self.std_normal.sample(self.rho.size()).to(DEVICE)
         sample = self.mu + self.sigma * epsilon
         return sample
 
