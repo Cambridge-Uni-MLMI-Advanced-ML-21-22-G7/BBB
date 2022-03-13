@@ -44,8 +44,8 @@ def plot_bbb_regression_predictions(
 
     # Formatting of plot    
     ax.legend()
-    # ax.set_ylim([-1.5, 1.5])
-    # ax.set_xlim([-0.6, 1/.4])
+    ax.set_ylim([-0.5, 1.3])
+    ax.set_xlim([-0.2, 1.3])
 
     # Display the plot
     plt.show()
