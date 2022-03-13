@@ -29,6 +29,7 @@
     "vp_variance_type": 1,
     "prior_type": 0,
     "local_reparam_trick": false,
+    "regression_likelihood_noise": 0.1,
     "early_stopping": false,
     "early_stopping_thresh": 0,
     "model_save_basedir": "./saved_models",
