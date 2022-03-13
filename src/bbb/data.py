@@ -85,6 +85,15 @@ class RegressionDataset(Dataset):
         epsilon = torch.randn(self.x.size()) * 0.02
         self.y = self.x + 0.3*torch.sin(2*np.pi*(self.x + epsilon)) + 0.3*torch.sin(4*np.pi*(self.x + epsilon)) + epsilon
 
+        # np.random.seed(0)
+        # xs = np.random.uniform(low=0., high=0.6, size=size)
+        # eps = np.random.normal(loc=0., scale=0.02, size=[size])
+
+        # ys = xs + 0.3 * np.sin(2*np.pi * (xs + eps)) + 0.3 * np.sin(4*np.pi * (xs + eps)) + eps
+
+        # self.x = torch.from_numpy(xs).reshape(-1,1).float()
+        # self.y = torch.from_numpy(ys).reshape(-1,1).float()
+
     def __len__(self):
         return self.size
 

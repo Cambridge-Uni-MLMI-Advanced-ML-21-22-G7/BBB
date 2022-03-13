@@ -13,7 +13,7 @@ class RegressionEval:
     # and in Tensorboard.
     eval_metric = 'RMSE'
 
-    def eval(self, test_data: DataLoader) -> float:
+    def evaluate(self, test_data: DataLoader) -> float:
         # Put model in evaluation mode
         self.model.eval()
 
@@ -45,7 +45,7 @@ class ClassificationEval:
     # and in Tensorboard.
     eval_metric = 'Acc'
 
-    def eval(self, test_data: DataLoader) -> float:
+    def evaluate(self, test_data: DataLoader) -> float:
         # Put model in evaluation mode
         self.model.eval()
 

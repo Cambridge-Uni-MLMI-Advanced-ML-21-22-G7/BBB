@@ -83,9 +83,30 @@ class BaseBNN(BaseModel, ABC):
         )
         self.model = nn.Sequential(*model_layers)
 
+        # self.l1 = BFC(
+        #     dim_in=self.input_dim,
+        #     dim_out=self.hidden_units,
+        #     **bfc_arguments
+        # )
+        # self.l1_act = nn.ReLU()
+        # for i in range(self.hidden_layers-2):
+        #     setattr(self, f'l{i+2}', BFC(
+        #             dim_in=self.hidden_units,
+        #             dim_out=self.hidden_units,
+        #             **bfc_arguments
+        #         )
+        #     )
+        #     setattr(self, f'l{i+2}_act', nn.ReLU())
+        # setattr(self, f'l{self.hidden_layers}', BFC(
+        #         dim_in=self.hidden_units,
+        #         dim_out=self.output_dim,
+        #         **bfc_arguments
+        #     )
+        # )
+
         # Optimizer
         self.optimizer = optim.Adam(
-            self.model.parameters(),
+            self.parameters(),
             lr=self.lr
         )
 
@@ -104,6 +125,10 @@ class BaseBNN(BaseModel, ABC):
         :rtype: Tensor
         """
         return self.model.forward(X) 
+        # for i in range(self.hidden_layers-1):
+        #     X = getattr(self, f'l{i+1}_act')(getattr(self, f'l{i+1}').forward(X))
+        # X = getattr(self, f'l{self.hidden_layers}')(X)
+        # return X
 
     def inference(self, X: Tensor) -> Tensor:
         """Here we do not draw weights but take the mean.
@@ -131,7 +156,8 @@ class BaseBNN(BaseModel, ABC):
         for layer in self.model:
             if isinstance(layer, BFC):
                 log_prior += layer.log_prior
-
+        # for i in range(self.hidden_layers):
+        #     log_prior = getattr(self, f'l{i+1}').log_prior
         return log_prior
 
     def log_var_posterior(self) -> float:
@@ -144,7 +170,8 @@ class BaseBNN(BaseModel, ABC):
         for layer in self.model:
             if isinstance(layer, BFC):
                 log_posterior += layer.log_var_post
-
+        # for i in range(self.hidden_layers):
+        #     log_posterior = getattr(self, f'l{i+1}').log_var_post
         return log_posterior
 
     def kl_d(self) -> float:
@@ -161,7 +188,8 @@ class BaseBNN(BaseModel, ABC):
         for layer in self.model:
             if isinstance(layer, BFC_LRT):
                 kl_d += layer.kl_d
-
+        # for i in range(self.hidden_layers):
+        #     kl_d = getattr(self, f'l{i+1}').kl_d
         return kl_d
 
     @abstractmethod
@@ -259,7 +287,7 @@ class BaseBNN(BaseModel, ABC):
 
         return elbo
 
-    def train(self, train_data: DataLoader) -> float:
+    def train_step(self, train_data: DataLoader) -> float:
         """Single epoch of training.
 
         :param train_data: training data
@@ -269,7 +297,9 @@ class BaseBNN(BaseModel, ABC):
         :rtype: float
         """
         # Put model in training mode
-        self.model.train()
+        self.train()
+
+        num_batches = len(train_data)
 
         # Loop through the training data
         for idx, (X, Y) in enumerate(train_data):
@@ -278,9 +308,10 @@ class BaseBNN(BaseModel, ABC):
             # Calculate pi according to the chosen method
             # Note that the method presented in the paper requires idx
             if self.kl_reweighting_type == KL_REWEIGHTING_TYPES.simple:
-                pi = 1/len(train_data)
+                pi = 1/num_batches
             elif self.kl_reweighting_type == KL_REWEIGHTING_TYPES.paper:
-                pi = 2 ** (len(train_data) - (idx + 1)) / (2 ** len(train_data) - 1)
+                # Note that len(train_data) returns the number of batches
+                pi = 2 ** (num_batches - (idx + 1)) / (2 ** num_batches - 1)
             else:
                 raise RuntimeError(f'Unrecognised KL re-weighting type: {self.kl_reweighting_type}')
 
@@ -310,7 +341,7 @@ class BaseBNN(BaseModel, ABC):
         :rtype: List[Tensor]
         """
         # Put model into evaluation mode
-        self.model.eval()
+        self.eval()
 
         # Initialise list of tensors to hold weight samples
         # Each tensor will hold samples of weights from a single layer
@@ -339,7 +370,7 @@ class BaseBNN(BaseModel, ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def eval(self, test_data: DataLoader):
+    def evaluate(self, test_data: DataLoader):
         """Abstract method: evaluation depends on the task.
 
         :param test_data: data to run evaluation against
@@ -357,14 +388,14 @@ class RegressionBNN(RegressionEval, BaseBNN):
         
         TODO: confirm we want this.
         """
-        return -torch.distributions.Normal(outputs, 1.0).log_prob(targets).sum()
+        return -torch.distributions.Normal(outputs, 0.1).log_prob(targets).sum()
 
     def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
         # Ensure tensor is assigned to correct device
         X = X.to(DEVICE)
 
         # Put model into evaluation mode
-        self.model.eval()
+        self.eval()
 
         # Initialise tensor to hold predictions
         output = torch.zeros(size=[len(X), self.output_dim, self.inference_samples]).to(DEVICE)
@@ -402,7 +433,7 @@ class ClassificationBNN(ClassificationEval, BaseBNN):
 
     def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
         # Put model into evaluation mode
-        self.model.eval()
+        self.eval()
 
         # Initialise tensor to hold class probabilities
         probs = torch.zeros(size=[len(X), self.output_dim])
@@ -436,7 +467,7 @@ class BanditBNN(RegressionEval, BaseBNN):
 
     def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
         # Put model into evaluation mode
-        self.model.eval()
+        self.eval()
 
         # Initialise tensor to hold predictions
         output = torch.zeros(size=[len(X), self.output_dim, self.inference_samples]).to(DEVICE)

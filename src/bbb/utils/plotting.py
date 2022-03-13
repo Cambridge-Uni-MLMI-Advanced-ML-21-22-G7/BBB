@@ -34,7 +34,7 @@ def plot_bbb_regression_predictions(
     ax.plot(X_val_arr[:,0], Y_val_pred_mean, marker='x', label='Prediction')
 
     # Two standard deviations
-    # ax.fill_between(X_val_arr[:,0], Y_val_pred_mean-2*np.sqrt(Y_val_pred_var), Y_val_pred_mean+2*np.sqrt(Y_val_pred_var), color='tab:green', alpha=0.2)
+    ax.fill_between(X_val_arr[:,0], Y_val_pred_mean-2*np.sqrt(Y_val_pred_var), Y_val_pred_mean+2*np.sqrt(Y_val_pred_var), color='tab:green', alpha=0.2)
 
     # 0th and 100th percentile
     ax.fill_between(X_val_arr[:,0], Y_val_pred_quartiles[0,:], Y_val_pred_quartiles[3,:], color='tab:blue', alpha=0.25)
@@ -44,6 +44,8 @@ def plot_bbb_regression_predictions(
 
     # Formatting of plot    
     ax.legend()
+    # ax.set_ylim([-1.5, 1.5])
+    # ax.set_xlim([-0.6, 1/.4])
 
     # Display the plot
     plt.show()
