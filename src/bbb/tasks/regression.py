@@ -65,11 +65,12 @@ BNN_REGRESSION_PARAMETERS = Parameters(
         w_mixture_weight=0.5,
         b_mixture_weight=0.5,
     ),
+    regression_likelihood_noise = 0.1,
     hidden_units = 400,
     hidden_layers = 3,
     batch_size = 128,
     lr = 1e-3,
-    epochs = 1000,
+    epochs = 10,
     elbo_samples = 5,
     inference_samples = 10,
     prior_type = PRIOR_TYPES.single,
@@ -77,68 +78,6 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     vp_variance_type = VP_VARIANCE_TYPES.paper,
     local_reparam_trick = False
 )
-
-# class RegressionTrainer:
-#     def __init__(self) -> None:
-#         self.net = RegressionBNN(params=BNN_REGRESSION_PARAMETERS).to(DEVICE)
-#         self.optimizer = optim.Adam(
-#             self.net.parameters(),
-#             lr=self.net.lr
-#         )
-
-#         # Scheduler
-#         self.scheduler = optim.lr_scheduler.StepLR(
-#             self.optimizer,
-#             step_size=100,
-#             gamma=0.5
-#         )
-    
-#     def train_step(self, train_data: DataLoader) -> float:
-#         """Single epoch of training.
-
-#         :param train_data: training data
-#         :type train_data: DataLoader
-#         :raises RuntimeError: unknown KL reweighting type specified
-#         :return: ELBO of final batch of training data processed
-#         :rtype: float
-#         """
-#         # Put model in training mode
-#         self.net.train()
-
-#         num_batches = len(train_data)
-
-#         # Loop through the training data
-#         for idx, (X, Y) in enumerate(train_data):
-#             X, Y = X.to(DEVICE), Y.to(DEVICE)
-
-#             # Calculate pi according to the chosen method
-#             # Note that the method presented in the paper requires idx
-#             if self.net.kl_reweighting_type == KL_REWEIGHTING_TYPES.simple:
-#                 pi = 1/num_batches
-#             elif self.net.kl_reweighting_type == KL_REWEIGHTING_TYPES.paper:
-#                 # Note that len(train_data) returns the number of batches
-#                 pi = 2 ** (num_batches - (idx + 1)) / (2 ** num_batches - 1)
-#             else:
-#                 raise RuntimeError(f'Unrecognised KL re-weighting type: {self.net.kl_reweighting_type}')
-
-#             self.net.zero_grad()
-
-#             # Call the appropriate method for determining the sample ELBO
-#             if self.net.local_reparam_trick:
-#                 batch_elbo = self.net.sample_ELBO_lrt(X, Y, pi, self.net.elbo_samples)
-#             else:
-#                 (
-#                     batch_elbo, batch_log_prior, batch_log_var_post, batch_nll
-#                 ) = self.net.sample_ELBO(X, Y, pi, self.net.elbo_samples)
-
-#             batch_elbo.backward()
-#             self.optimizer.step()
-
-#         # Record the ELBO
-#         self.net.loss_hist.append(batch_elbo.item())
-
-#         # Return the ELBO figure of the final batch as a representative example
-#         return batch_elbo.item()
 
 
 def run_bbb_regression_training():

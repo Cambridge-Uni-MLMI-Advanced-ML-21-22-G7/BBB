@@ -83,27 +83,6 @@ class BaseBNN(BaseModel, ABC):
         )
         self.model = nn.Sequential(*model_layers)
 
-        # self.l1 = BFC(
-        #     dim_in=self.input_dim,
-        #     dim_out=self.hidden_units,
-        #     **bfc_arguments
-        # )
-        # self.l1_act = nn.ReLU()
-        # for i in range(self.hidden_layers-2):
-        #     setattr(self, f'l{i+2}', BFC(
-        #             dim_in=self.hidden_units,
-        #             dim_out=self.hidden_units,
-        #             **bfc_arguments
-        #         )
-        #     )
-        #     setattr(self, f'l{i+2}_act', nn.ReLU())
-        # setattr(self, f'l{self.hidden_layers}', BFC(
-        #         dim_in=self.hidden_units,
-        #         dim_out=self.output_dim,
-        #         **bfc_arguments
-        #     )
-        # )
-
         # Optimizer
         self.optimizer = optim.Adam(
             self.parameters(),
@@ -125,10 +104,6 @@ class BaseBNN(BaseModel, ABC):
         :rtype: Tensor
         """
         return self.model.forward(X) 
-        # for i in range(self.hidden_layers-1):
-        #     X = getattr(self, f'l{i+1}_act')(getattr(self, f'l{i+1}').forward(X))
-        # X = getattr(self, f'l{self.hidden_layers}')(X)
-        # return X
 
     def inference(self, X: Tensor) -> Tensor:
         """Here we do not draw weights but take the mean.
@@ -156,8 +131,6 @@ class BaseBNN(BaseModel, ABC):
         for layer in self.model:
             if isinstance(layer, BFC):
                 log_prior += layer.log_prior
-        # for i in range(self.hidden_layers):
-        #     log_prior = getattr(self, f'l{i+1}').log_prior
         return log_prior
 
     def log_var_posterior(self) -> float:
@@ -170,8 +143,6 @@ class BaseBNN(BaseModel, ABC):
         for layer in self.model:
             if isinstance(layer, BFC):
                 log_posterior += layer.log_var_post
-        # for i in range(self.hidden_layers):
-        #     log_posterior = getattr(self, f'l{i+1}').log_var_post
         return log_posterior
 
     def kl_d(self) -> float:
@@ -188,8 +159,6 @@ class BaseBNN(BaseModel, ABC):
         for layer in self.model:
             if isinstance(layer, BFC_LRT):
                 kl_d += layer.kl_d
-        # for i in range(self.hidden_layers):
-        #     kl_d = getattr(self, f'l{i+1}').kl_d
         return kl_d
 
     @abstractmethod
@@ -382,12 +351,20 @@ class RegressionBNN(RegressionEval, BaseBNN):
     # NOTE: This class inherits from RegressionEval and then BaseBNN
     # The order here is important
 
+    def __init__(self, params: Parameters) -> None:
+        super().__init__(params=params)
+        
+        # Asser that regression_likelihood_noise has been provided
+        assert type(params.regression_likelihood_noise) == float
+
+        self.regression_likelihood_noise = params.regression_likelihood_noise
+
     def get_nll(self, outputs: torch.Tensor, targets: torch.Tensor) -> float:
         """Calculation of NLL assuming noise with zero mean and unit variance.
         
         TODO: confirm we want this.
         """
-        return -torch.distributions.Normal(outputs, 0.1).log_prob(targets).sum()
+        return -torch.distributions.Normal(outputs, self.regression_likelihood_noise).log_prob(targets).sum()
 
     def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
         # Ensure tensor is assigned to correct device
