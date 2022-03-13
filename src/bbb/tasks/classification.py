@@ -24,8 +24,8 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     weight_mu_range = [-0.2, 0.2],
     weight_rho_range = [-5, -4],
     prior_params = PriorParameters(
-        w_sigma=1,
-        b_sigma=2,
+        w_sigma=1.,
+        b_sigma=1.,
     ),
     batch_size = 128,
     lr = 1e-4,

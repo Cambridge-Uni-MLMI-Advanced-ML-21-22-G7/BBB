@@ -412,11 +412,14 @@ class ClassificationBNN(ClassificationEval, BaseBNN):
         return F.cross_entropy(outputs, targets, reduction='sum')
 
     def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
+        # Ensure tensor is assigned to correct device
+        X = X.to(DEVICE)
+
         # Put model into evaluation mode
         self.eval()
 
         # Initialise tensor to hold class probabilities
-        probs = torch.zeros(size=[len(X), self.output_dim])
+        probs = torch.zeros(size=[len(X), self.output_dim]).to(DEVICE)
 
         # Repeat forward (sampling) <inference_samples> times to create probability distribution
         for _ in torch.arange(self.inference_samples):

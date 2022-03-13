@@ -60,7 +60,7 @@ class ClassificationEval:
                 preds, probs = self.predict(inputs)
 
                 total += self.batch_size
-                correct += (labels == preds).sum().item()
+                correct += (labels == preds).sum()
 
         self.eval_score = correct / total
 
