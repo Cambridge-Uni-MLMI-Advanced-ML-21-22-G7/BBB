@@ -33,6 +33,7 @@ class BaseDNN(BaseModel, ABC):
         self.hidden_units = params.hidden_units
         self.batch_size = params.batch_size
         self.lr = params.lr
+        self.step_size = params.step_size
 
         # Model
         model_layers = []
@@ -62,7 +63,7 @@ class BaseDNN(BaseModel, ABC):
         # Scheduler
         self.scheduler = optim.lr_scheduler.StepLR(
             self.optimizer,
-            step_size=100,
+            step_size=self.step_size,
             gamma=0.5
         )
 
