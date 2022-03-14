@@ -84,6 +84,8 @@ DNN_CLASSIFY_PARAMETERS = Parameters(
     lr = 0.01,
     epochs = 300,
     step_size = 75,
+    dropout = False,
+    dropout_p = 0.5
 )
 
 def run_dnn_mnist_classification_training():
