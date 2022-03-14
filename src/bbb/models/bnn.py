@@ -41,6 +41,7 @@ class BaseBNN(BaseModel, ABC):
         self.inference_samples = params.inference_samples
         self.batch_size = params.batch_size
         self.lr = params.lr
+        self.step_size = params.step_size
         self.prior_type = params.prior_type
         self.kl_reweighting_type = params.kl_reweighting_type
         self.vp_variance_type = params.vp_variance_type
@@ -92,7 +93,7 @@ class BaseBNN(BaseModel, ABC):
 
         # Scheduler
         self.scheduler = optim.lr_scheduler.StepLR(
-            self.optimizer,step_size=5000,
+            self.optimizer,step_size=self.step_size,
             gamma=0.5
         )
 
