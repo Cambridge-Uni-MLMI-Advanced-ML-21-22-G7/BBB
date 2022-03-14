@@ -1,8 +1,9 @@
+
 import logging
 from typing import Union, Tuple
-
 import numpy as np
 import torch
+from typing import Union, Tuple
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import T_co
 from torchvision import datasets, transforms
@@ -13,7 +14,6 @@ from bbb.utils.pytorch_setup import DEVICE
 
 
 logger = logging.getLogger(__name__)
-
 
 def load_mnist(train: bool, batch_size: int, shuffle: bool) -> DataLoader:
     return DataLoader(

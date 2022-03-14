@@ -36,6 +36,7 @@ class BaseDNN(BaseModel, ABC):
         self.hidden_units = params.hidden_units
         self.batch_size = params.batch_size
         self.lr = params.lr
+        self.step_size = params.step_size
         self.dropout = params.dropout
         self.dropout_p = params.dropout_p
 
@@ -86,7 +87,7 @@ class BaseDNN(BaseModel, ABC):
         ###########
         self.scheduler = optim.lr_scheduler.StepLR(
             self.optimizer,
-            step_size=100,
+            step_size=self.step_size,
             gamma=0.5
         )
 

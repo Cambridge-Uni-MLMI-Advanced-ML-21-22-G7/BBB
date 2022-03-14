@@ -31,6 +31,7 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     batch_size = 128,
     lr = 1e-4,
     epochs = 300,
+    step_size = 75,
     elbo_samples = 2,
     inference_samples = 10,
     prior_type = PRIOR_TYPES.single,
@@ -81,7 +82,8 @@ DNN_CLASSIFY_PARAMETERS = Parameters(
     hidden_layers = 3,
     batch_size = 128,
     lr = 0.01,
-    epochs = 10,
+    epochs = 300,
+    step_size = 75,
 )
 
 def run_dnn_mnist_classification_training():
