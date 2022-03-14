@@ -26,40 +26,64 @@ class BaseDNN(BaseModel, ABC):
         """
         super().__init__(params=params, eval_mode=eval_mode)
 
+        ############
         # Parameters
+        ############
+
         self.input_dim = params.input_dim
         self.output_dim = params.output_dim
         self.hidden_layers = params.hidden_layers
         self.hidden_units = params.hidden_units
         self.batch_size = params.batch_size
         self.lr = params.lr
+        self.dropout = params.dropout
+        self.dropout_p = params.dropout_p
 
+        #######
         # Model
+        #######
+        # Initialise empty list of layers
         model_layers = []
+
+        # Add the first layer
         model_layers.append(nn.Linear(
             in_features=self.input_dim,
             out_features=self.hidden_units
         ))
         model_layers.append(nn.ReLU())
+        if self.dropout:
+            model_layers.append(nn.Dropout(p=self.dropout_p))
+
+        # Add the self.hidden_layers-2 intermediate layers
         for _ in range(self.hidden_layers-2):
             model_layers.append(nn.Linear(
                     in_features=self.hidden_units,
                     out_features=self.hidden_units
                 ))
             model_layers.append(nn.ReLU())
+            if self.dropout:
+                model_layers.append(nn.Dropout(p=self.dropout_p))
+
+        # Add the final layer
         model_layers.append(nn.Linear(
             in_features=self.hidden_units,
             out_features=self.output_dim
         ))
+
+        # Pass the list to the nn.Sequential class
         self.model = nn.Sequential(*model_layers)
-    
+        
+        ###########
         # Optimizer
+        ###########
         self.optimizer = optim.Adam(
             self.parameters(),
             lr=self.lr
         )
 
+        ###########
         # Scheduler
+        ###########
         self.scheduler = optim.lr_scheduler.StepLR(
             self.optimizer,
             step_size=100,
