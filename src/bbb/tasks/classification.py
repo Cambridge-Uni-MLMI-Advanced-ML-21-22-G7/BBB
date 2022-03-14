@@ -70,11 +70,11 @@ def run_bbb_mnist_classification_evaluation(model_path: str):
 
 
 #############
-# CNN Methods
+# DNN Methods
 #############
 
-CNN_CLASSIFY_PARAMETERS = Parameters(
-    name = "CNN_classification",
+DNN_CLASSIFY_PARAMETERS = Parameters(
+    name = "DNN_classification",
     input_dim = 28*28,
     output_dim = 10,
     hidden_units = 1200,
@@ -84,18 +84,18 @@ CNN_CLASSIFY_PARAMETERS = Parameters(
     epochs = 10,
 )
 
-def run_cnn_mnist_classification_training():
+def run_dnn_mnist_classification_training():
     logger.info('Beginning classification training...')
-    net = ClassificationDNN(params=CNN_CLASSIFY_PARAMETERS).to(DEVICE)
+    net = ClassificationDNN(params=DNN_CLASSIFY_PARAMETERS).to(DEVICE)
 
-    logger.info('Initialized CNN...')
+    logger.info('Initialized DNN...')
 
-    X_train = load_mnist(train=True, batch_size=CNN_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
-    X_val = load_mnist(train=False, batch_size=CNN_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
+    X_train = load_mnist(train=True, batch_size=DNN_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
+    X_val = load_mnist(train=False, batch_size=DNN_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
 
     logger.info('Loaded MNIST...')
 
-    train_with_tqdm(net=net, train_data=X_train, epochs=CNN_CLASSIFY_PARAMETERS.epochs, eval_data=X_val)
+    train_with_tqdm(net=net, train_data=X_train, epochs=DNN_CLASSIFY_PARAMETERS.epochs, eval_data=X_val)
 
     logger.info('Completed classification training...')
 
@@ -105,10 +105,10 @@ def run_cnn_mnist_classification_training():
     weight_samples = net.weight_samples()
     plot_weight_samples(weight_samples, save_dir=net.model_save_dir)
 
-def run_cnn_mnist_classification_evaluation(model_path: str):
+def run_dnn_mnist_classification_evaluation(model_path: str):
     logger.info(f'Beginning classification evaluation against {model_path}...')
     
-    net = ClassificationDNN(params=CNN_CLASSIFY_PARAMETERS, eval_mode=True).to(DEVICE)
+    net = ClassificationDNN(params=DNN_CLASSIFY_PARAMETERS, eval_mode=True).to(DEVICE)
     net.load_saved(model_path=model_path)
 
     weight_samples = net.weight_samples()
