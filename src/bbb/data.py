@@ -20,7 +20,9 @@ def load_mnist(train: bool, batch_size: int, shuffle: bool) -> DataLoader:
         datasets.MNIST('./data/mnist', train=train, download=True, transform=transforms.ToTensor()),
         batch_size=batch_size, 
         shuffle=shuffle,
-        drop_last=True
+        drop_last=True,  # This should be set to true, else it will disrupt average calculations
+        pin_memory=True,
+        num_workers=0
     )
 
 def load_bandit() -> Tuple[torch.Tensor, torch.Tensor]:
@@ -99,7 +101,7 @@ def generate_regression_data(train: bool, size: int, batch_size: int, shuffle: b
             shuffle=shuffle,
             drop_last=True,  # This should be set to true, else it will disrupt average calculations
             pin_memory=True,
-            num_workers=8
+            num_workers=0
         )
     else:
         return DataLoader(
@@ -108,5 +110,5 @@ def generate_regression_data(train: bool, size: int, batch_size: int, shuffle: b
             shuffle=shuffle,
             drop_last=True,  # This should be set to true, else it will disrupt average calculations
             pin_memory=True,
-            num_workers=8
+            num_workers=0
         )

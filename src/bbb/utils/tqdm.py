@@ -33,7 +33,7 @@ def train_with_tqdm(net: nn.Module, train_data: DataLoader, epochs: int, eval_da
             t_epoch.set_description(f"Epoch {epoch}")
 
             # Run a training step
-            loss = net.train(train_data)
+            loss = net.train_step(train_data)
 
             # Write loss to tensorboard
             net.writer.add_scalar('Training Loss', loss, epoch)
@@ -42,7 +42,7 @@ def train_with_tqdm(net: nn.Module, train_data: DataLoader, epochs: int, eval_da
             logger.debug(net.optimizer.param_groups)
 
             if eval_data is not None:
-                net.eval(eval_data)
+                net.evaluate(eval_data)
 
                 # Write accuracy to tensorboard
                 net.writer.add_scalar(f'Training {net.eval_metric}', net.eval_score, epoch)

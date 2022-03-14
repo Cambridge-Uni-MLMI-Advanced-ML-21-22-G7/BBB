@@ -52,7 +52,7 @@ class DNN(RegressionEval, BaseModel):
     
         # Optimizer
         self.optimizer = optim.Adam(
-            self.model.parameters(),
+            self.parameters(),
             lr=self.lr
         )
 
@@ -67,8 +67,8 @@ class DNN(RegressionEval, BaseModel):
     def forward(self, X: Tensor):
         return self.model.forward(X)
 
-    def train(self, train_data: DataLoader):
-        self.model.train()
+    def train_step(self, train_data: DataLoader):
+        self.train()
 
         for i, (x, y) in enumerate(train_data):
             output = self(x)
@@ -85,7 +85,7 @@ class DNN(RegressionEval, BaseModel):
 
     def predict(self, X: Tensor) -> Tuple[Tensor, None]:
         # Put model in evaluation mode
-        self.model.eval()
+        self.eval()
 
         # Make predictions
         preds = self(X)

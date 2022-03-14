@@ -25,10 +25,10 @@ logger = logging.getLogger(__name__)
 
 def _bbb_regression_evaluation(net: nn.Module, X_train: DataLoader = None, X_val: DataLoader = None):
     if X_train is None or X_val is None:
-        X_train = generate_regression_data(train=True, size=10*BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
+        X_train = generate_regression_data(train=True, size=8*BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
         X_val = generate_regression_data(train=False, size=BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
 
-    rmse = net.eval(X_val)
+    rmse = net.evaluate(X_val)
     logger.info(f'RMSE: {rmse}')
 
     X_train_arr = np.array(X_train.dataset, dtype=float)
@@ -65,18 +65,20 @@ BNN_REGRESSION_PARAMETERS = Parameters(
         w_mixture_weight=0.5,
         b_mixture_weight=0.5,
     ),
+    regression_likelihood_noise = 0.1,
     hidden_units = 400,
-    hidden_layers = 4,
+    hidden_layers = 3,
     batch_size = 128,
     lr = 1e-3,
     epochs = 1000,
     elbo_samples = 5,
     inference_samples = 10,
     prior_type = PRIOR_TYPES.single,
-    kl_reweighting_type = KL_REWEIGHTING_TYPES.simple,
+    kl_reweighting_type = KL_REWEIGHTING_TYPES.paper,
     vp_variance_type = VP_VARIANCE_TYPES.paper,
-    local_reparam_trick = True
+    local_reparam_trick = False
 )
+
 
 def run_bbb_regression_training():
     logger.info('Beginning regression training...')
@@ -84,7 +86,7 @@ def run_bbb_regression_training():
 
     logger.info(BNN_REGRESSION_PARAMETERS)
 
-    X_train = generate_regression_data(train=True, size=10*BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
+    X_train = generate_regression_data(train=True, size=8*BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
     X_val = generate_regression_data(train=False, size=BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
 
     train_with_tqdm(net=net, train_data=X_train, eval_data=X_val, epochs=BNN_REGRESSION_PARAMETERS.epochs)
@@ -114,7 +116,7 @@ def _dnn_regression_evaluation(net: nn.Module, X_train: DataLoader = None, X_val
         X_train = generate_regression_data(train=True, size=10*BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
         X_val = generate_regression_data(train=False, size=BNN_REGRESSION_PARAMETERS.batch_size, batch_size=BNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
 
-    rmse = net.eval(X_val)
+    rmse = net.evaluate(X_val)
     logger.info(f'RMSE: {rmse}')
 
     X_train_arr = np.array(X_train.dataset, dtype=float)

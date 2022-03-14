@@ -13,9 +13,9 @@ class RegressionEval:
     # and in Tensorboard.
     eval_metric = 'RMSE'
 
-    def eval(self, test_data: DataLoader) -> float:
+    def evaluate(self, test_data: DataLoader) -> float:
         # Put model in evaluation mode
-        self.model.eval()
+        self.eval()
 
         running_err = 0
         total = 0
@@ -45,9 +45,9 @@ class ClassificationEval:
     # and in Tensorboard.
     eval_metric = 'Acc'
 
-    def eval(self, test_data: DataLoader) -> float:
+    def evaluate(self, test_data: DataLoader) -> float:
         # Put model in evaluation mode
-        self.model.eval()
+        self.eval()
 
         correct = 0
         total = 0
@@ -60,7 +60,7 @@ class ClassificationEval:
                 preds, probs = self.predict(inputs)
 
                 total += self.batch_size
-                correct += (labels == preds).sum().item()
+                correct += (labels == preds).sum()
 
         self.eval_score = correct / total
 

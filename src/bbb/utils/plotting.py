@@ -42,7 +42,11 @@ def plot_bbb_regression_predictions(
     # 25th and 75th percentile
     ax.fill_between(X_val_arr[:,0], Y_val_pred_quartiles[1,:], Y_val_pred_quartiles[2,:], color='tab:orange', alpha=0.50)
 
-    # Formatting of plot    
+    # Formatting of plot
+    ax.set_xlim([-0.2, 1.3])
+    ax.set_ylim([-0.5, 1.3])
+
+    # Add legend
     ax.legend()
 
     # Display the plot
