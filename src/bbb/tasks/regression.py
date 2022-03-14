@@ -71,6 +71,7 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     batch_size = 128,
     lr = 1e-3,
     epochs = 1000,
+    step_size = 250,
     elbo_samples = 5,
     inference_samples = 10,
     prior_type = PRIOR_TYPES.single,
@@ -145,6 +146,7 @@ DNN_REGRESSION_PARAMETERS = Parameters(
     batch_size = 128,
     lr = 1e-3,
     epochs = 1000,
+    step_size = 250,
     early_stopping = False,
     early_stopping_thresh = 1e-4
 )
