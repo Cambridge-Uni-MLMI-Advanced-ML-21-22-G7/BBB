@@ -1,5 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
+from time import sleep
 from typing import Tuple, List
 
 import torch
@@ -82,7 +83,7 @@ class BaseBNN(BaseModel, ABC):
 
         # Scheduler
         self.scheduler = optim.lr_scheduler.StepLR(
-            self.optimizer,step_size=100,
+            self.optimizer,step_size=5000,
             gamma=0.5
         )
 
@@ -348,7 +349,6 @@ class ClassificationBNN(ClassificationEval, BaseBNN):
 class BanditBNN(RegressionEval, BaseBNN):
     # NOTE: This class inherits from RegressionEval and then BaseBNN
     # The order here is important
-
     def get_nll(self, outputs: torch.Tensor, targets: torch.Tensor) -> float:
         """Calculation of NLL assuming noise with zero mean and unit variance.
         
