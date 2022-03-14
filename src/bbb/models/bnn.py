@@ -3,16 +3,17 @@ from abc import ABC, abstractmethod
 from time import sleep
 from typing import Tuple, List
 
+import numpy as np
 import torch
 from torch import nn, optim, Tensor
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from bbb.utils.pytorch_setup import DEVICE
-from bbb.config.constants import KL_REWEIGHTING_TYPES
+from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES
 from bbb.config.parameters import Parameters
 from bbb.models.base import BaseModel
-from bbb.models.layers import BFC
+from bbb.models.layers import BFC, BFC_LRT
 from bbb.models.evaluation import RegressionEval, ClassificationEval
 
 
@@ -25,16 +26,16 @@ class BaseBNN(BaseModel, ABC):
     This class inherits from BaseModel, and is inherited by specific
     Regression and Classification classes. See below.
     """
-    def __init__(self, params: Parameters) -> None:
-        super().__init__(params=params)
+    def __init__(self, params: Parameters, eval_mode: bool = False) -> None:
+        super().__init__(params=params, eval_mode=eval_mode)
 
         # Parameters
         self.input_dim = params.input_dim
         self.hidden_units = params.hidden_units
         self.hidden_layers = params.hidden_layers
         self.output_dim = params.output_dim
-        self.weight_mu = params.weight_mu
-        self.weight_rho = params.weight_rho
+        self.weight_mu_range = params.weight_mu_range
+        self.weight_rho_range = params.weight_rho_range
         self.prior_params = params.prior_params
         self.elbo_samples = params.elbo_samples
         self.inference_samples = params.inference_samples
@@ -43,11 +44,19 @@ class BaseBNN(BaseModel, ABC):
         self.prior_type = params.prior_type
         self.kl_reweighting_type = params.kl_reweighting_type
         self.vp_variance_type = params.vp_variance_type
+        self.local_reparam_trick = params.local_reparam_trick
+
+        # If using local reparameterisation trick the prior must be Gaussian
+        # This is due to the exact calculation of the KL divergence
+        # KL(q(w|thetat)||p(w))
+        if self.local_reparam_trick:
+            assert self.prior_type == PRIOR_TYPES.single
+
 
         # BFC argument dict
         bfc_arguments = {
-            "weight_mu": self.weight_mu,
-            "weight_rho": self.weight_rho,
+            "weight_mu_range": self.weight_mu_range,
+            "weight_rho_range": self.weight_rho_range,
             "prior_params": self.prior_params,
             "prior_type": self.prior_type,
             "vp_var_type": self.vp_variance_type
@@ -77,7 +86,7 @@ class BaseBNN(BaseModel, ABC):
 
         # Optimizer
         self.optimizer = optim.Adam(
-            self.model.parameters(),
+            self.parameters(),
             lr=self.lr
         )
 
@@ -139,6 +148,23 @@ class BaseBNN(BaseModel, ABC):
 
         return log_posterior
 
+    def kl_d(self) -> float:
+        """Calculate the KL divergence: KL(q(w|theta)||p(w)).
+        This is the divergence between the prior and variational posterior.
+
+        :return: the KL divergence
+        :rtype: float
+        """
+        # This should only be run for the local reparameterisation trick
+        assert self.local_reparam_trick
+
+        kl_d = 0
+        for layer in self.model:
+            if isinstance(layer, BFC_LRT):
+                kl_d += layer.kl_d
+
+        return kl_d
+
     @abstractmethod
     def get_nll(self, outputs: torch.Tensor, targets: torch.Tensor) -> float:
         """Calculate the negative log likelihood; log P(D|w). This is task
@@ -196,8 +222,45 @@ class BaseBNN(BaseModel, ABC):
         
         return elbo, log_prior, log_variational_posterior, nll
 
+    def sample_ELBO_lrt(self, X: Tensor, Y: Tensor, pi: float, num_samples: int) -> float:
+        """Run X through the (sampled) model <num_samples> times. This uses the local
+        reparameterisation trick.
+        
+        pi is the KL re-weighting factor used in section 3.4.
 
-    def train(self, train_data: DataLoader) -> float:
+        :param X: features
+        :type X: Tensor
+        :param Y: ground-truth/labels/targets
+        :type Y: Tensor
+        :param pi: weighting to use in KL reweighting
+        :type pi: float
+        :param num_samples: number of samples to use to estimate expectation
+        :type num_samples: int
+        :return: ELBO, log prior, log variational posterior and negative log likelihood
+        :rtype: Tuple[float, float, float, float]
+        """
+        # Ensure that this method is not being accidentally called from the wrong place
+        if not self.local_reparam_trick:
+            raise RuntimeError("Free energy calculation applies to local reparameterisation trick only")
+        
+        # Determine the mean negative log-likelihood over a range of activation samples
+        nlls = torch.zeros(num_samples).to(DEVICE)
+        for i in range(num_samples):
+            preds = self.forward(X)
+            nlls[i] = self.get_nll(preds, Y)
+        nll = nlls.mean()
+        
+        # The KL divergence is constant
+        kl_d = self.kl_d()
+
+        # Compute an estimate of ELBO
+        # section 3.4 for pi description
+        # pi should not be applied to the NLL
+        elbo = pi*kl_d + nll
+
+        return elbo
+
+    def train_step(self, train_data: DataLoader) -> float:
         """Single epoch of training.
 
         :param train_data: training data
@@ -207,7 +270,10 @@ class BaseBNN(BaseModel, ABC):
         :rtype: float
         """
         # Put model in training mode
-        self.model.train()
+        self.train()
+
+        # Determine the number of batches
+        num_batches = len(train_data)
 
         # Loop through the training data
         for idx, (X, Y) in enumerate(train_data):
@@ -216,20 +282,27 @@ class BaseBNN(BaseModel, ABC):
             # Calculate pi according to the chosen method
             # Note that the method presented in the paper requires idx
             if self.kl_reweighting_type == KL_REWEIGHTING_TYPES.simple:
-                pi = 1/len(train_data)
+                pi = 1/num_batches
             elif self.kl_reweighting_type == KL_REWEIGHTING_TYPES.paper:
-                pi = 2 ** (len(train_data) - (idx + 1)) / (2 ** len(train_data) - 1)
+                pi = 2 ** (num_batches - (idx + 1)) / (2 ** num_batches - 1)
             else:
                 raise RuntimeError(f'Unrecognised KL re-weighting type: {self.kl_reweighting_type}')
 
             self.zero_grad()
 
-            (
-                batch_elbo, batch_log_prior, batch_log_var_post, batch_nll
-            ) = self.sample_ELBO(X, Y, pi, self.elbo_samples)
-            
+            # Call the appropriate method for determining the sample ELBO
+            if self.local_reparam_trick:
+                batch_elbo = self.sample_ELBO_lrt(X, Y, pi, self.elbo_samples)
+            else:
+                (
+                    batch_elbo, batch_log_prior, batch_log_var_post, batch_nll
+                ) = self.sample_ELBO(X, Y, pi, self.elbo_samples)
+
             batch_elbo.backward()
             self.optimizer.step()
+
+        # Record the ELBO
+        self.loss_hist.append(batch_elbo.item())
 
         # Return the ELBO figure of the final batch as a representative example
         return batch_elbo.item()
@@ -241,8 +314,11 @@ class BaseBNN(BaseModel, ABC):
         :rtype: List[Tensor]
         """
         # Put model into evaluation mode
-        self.model.eval()
+        self.eval()
 
+        ##################################
+        # Sampling weights and taking mean
+        ##################################
         # Initialise list of tensors to hold weight samples
         # Each tensor will hold samples of weights from a single layer
         weight_tensors = [
@@ -257,6 +333,16 @@ class BaseBNN(BaseModel, ABC):
         for i, layer in enumerate([l for l in self.model if isinstance(l, BFC)]):
             for j in range(self.inference_samples):
                 weight_tensors[i][:, j] = layer.w_var_post.sample().flatten()
+            
+             # Take the mean across the samples
+            weight_tensors[i] = weight_tensors[i].mean(axis=-1)
+
+        ####################
+        # Using mean weights
+        ####################
+        # weight_tensors = []
+        # for layer in [l for l in self.model if isinstance(l, BFC)]:
+        #     weight_tensors.append(layer.w_var_post.mu.flatten())
 
         return weight_tensors
 
@@ -270,7 +356,7 @@ class BaseBNN(BaseModel, ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def eval(self, test_data: DataLoader):
+    def evaluate(self, test_data: DataLoader):
         """Abstract method: evaluation depends on the task.
 
         :param test_data: data to run evaluation against
@@ -283,16 +369,27 @@ class RegressionBNN(RegressionEval, BaseBNN):
     # NOTE: This class inherits from RegressionEval and then BaseBNN
     # The order here is important
 
+    def __init__(self, params: Parameters, eval_mode: bool = False) -> None:
+        super().__init__(params=params, eval_mode=eval_mode)
+        
+        # Assert that regression_likelihood_noise has been provided
+        assert type(params.regression_likelihood_noise) == float
+
+        self.regression_likelihood_noise = params.regression_likelihood_noise
+
     def get_nll(self, outputs: torch.Tensor, targets: torch.Tensor) -> float:
         """Calculation of NLL assuming noise with zero mean and unit variance.
         
         TODO: confirm we want this.
         """
-        return -torch.distributions.Normal(outputs, 1.0).log_prob(targets).sum()
+        return -torch.distributions.Normal(outputs, self.regression_likelihood_noise).log_prob(targets).sum()
 
     def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
+        # Ensure tensor is assigned to correct device
+        X = X.to(DEVICE)
+
         # Put model into evaluation mode
-        self.model.eval()
+        self.eval()
 
         # Initialise tensor to hold predictions
         output = torch.zeros(size=[len(X), self.output_dim, self.inference_samples]).to(DEVICE)
@@ -304,7 +401,11 @@ class RegressionBNN(RegressionEval, BaseBNN):
         # Determine the average and the variance of the samples
         mean, var = output.mean(dim=-1), output.var(dim=-1)
 
-        return mean, var
+        # Determine the quartiles
+        q = torch.tensor([0., 0.25, 0.75, 1.]).to(DEVICE)
+        quartiles = torch.quantile(output, q, dim=-1)
+
+        return mean, var, quartiles
 
 class ClassificationBNN(ClassificationEval, BaseBNN):
     # NOTE: This class inherits from ClassificationEval and then BaseBNN
@@ -313,33 +414,33 @@ class ClassificationBNN(ClassificationEval, BaseBNN):
     def forward(self, X: Tensor) -> Tensor:
         # Flatten the image
         X = X.view(-1, self.input_dim)
-        return super().forward(X)
+        return F.softmax(super().forward(X), dim=1)
 
     def inference(self, X: Tensor) -> Tensor:
         # Flatten the image
         x = x.view(-1, self.input_dim)
-        return super().inference(X)
+        return F.softmax(super().inference(X), dim=1)
 
     def get_nll(self, outputs: torch.Tensor, targets: torch.Tensor) -> float:
         # NLL calculated as cross entropy
         return F.cross_entropy(outputs, targets, reduction='sum')
 
     def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
+        # Ensure tensor is assigned to correct device
+        X = X.to(DEVICE)
+
         # Put model into evaluation mode
-        self.model.eval()
+        self.eval()
 
         # Initialise tensor to hold class probabilities
-        probs = torch.zeros(size=[len(X), self.output_dim])
+        probs = torch.zeros(size=[len(X), self.output_dim]).to(DEVICE)
 
         # Repeat forward (sampling) <inference_samples> times to create probability distribution
         for _ in torch.arange(self.inference_samples):
             output = self.forward(X)
 
-            # Apply softmax to outputs
-            out = F.softmax(output, dim=1)
-
             # Incremental update of average
-            probs += out / self.inference_samples
+            probs += output / self.inference_samples
         
         # Select most likely class
         preds = torch.argmax(probs, dim=1)
@@ -354,11 +455,12 @@ class BanditBNN(RegressionEval, BaseBNN):
         
         TODO: confirm we want this.
         """
-        return 0
+        # return 0
+        return -torch.distributions.Normal(outputs, 1.0).log_prob(targets).sum()
 
     def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
         # Put model into evaluation mode
-        self.model.eval()
+        self.eval()
 
         # Initialise tensor to hold predictions
         output = torch.zeros(size=[len(X), self.output_dim, self.inference_samples]).to(DEVICE)

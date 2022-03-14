@@ -31,14 +31,16 @@ class Parameters:
     # Parameters common to some models
     # All default to None
     hidden_units: int = None
-    weight_mu: List[float] = None         # range for mu 
-    weight_rho: List[float] = None        # range for rho
+    weight_mu_range: List[float] = None        # range for mu 
+    weight_rho_range: List[float] = None       # range for rho
     prior_params: PriorParameters = None
-    elbo_samples: int = None              # to draw for ELBO (training)
-    inference_samples: int = None         # to draw for inference
-    kl_reweighting_type: int = None       # method used for KL reweighting
-    vp_variance_type: int = None          # type of variational posterior variance used
+    elbo_samples: int = None                   # to draw for ELBO (training)
+    inference_samples: int = None              # to draw for inference
+    kl_reweighting_type: int = None            # method used for KL reweighting
+    vp_variance_type: int = None               # type of variational posterior variance used
     prior_type: int = None
+    local_reparam_trick: bool = False
+    regression_likelihood_noise: float = None  # noise used when determining likelihood of regression problems
 
     # Early stopping parameters
     # By default, do not early stop
@@ -47,5 +49,5 @@ class Parameters:
 
     # These parameters are unlikely to need to
     # be changed from their defaults
-    model_save_dir: str = MODEL_SAVE_DIR
+    model_save_basedir: str = MODEL_SAVE_DIR
     tensorboard_save_dir: str = TENSORBOARD_SAVE_DIR

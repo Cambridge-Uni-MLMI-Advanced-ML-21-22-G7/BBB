@@ -1,3 +1,4 @@
+import os
 import logging
 from abc import ABC, abstractmethod
 
@@ -11,12 +12,16 @@ from scipy import interpolate
 
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.config.parameters import Parameters, PriorParameters
-from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES
+from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES, PLOTS_DIR
 from bbb.models.dnn import DNN
+
+from bbb.utils.pytorch_setup import DEVICE
+from bbb.config.parameters import Parameters, PriorParameters
+# from bbb.config.constants import (
+#     KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES, PLOTS_DIR
+# )
 from bbb.models.bnn import BanditBNN
 from bbb.data import load_bandit
-
-
 
 logger = logging.getLogger(__name__)
 Var = lambda x, dtype=torch.FloatTensor: Variable(
@@ -58,14 +63,13 @@ class MushroomBandit(ABC):
         for i, idx in enumerate(np.random.choice(range(x.shape[0]), 4096)):
             eaten = 1 if np.random.rand() > 0.5 else 0
             action = [1, 0] if eaten else [0, 1]
-            # import pdb
-            # pdb.set_trace()
             self.bufferX[i] = torch.cat((x[idx],torch.Tensor(action).to(DEVICE)),-1)
             self.bufferY[i] = self.get_reward(eaten, y[idx])
         
     # function to get which mushrooms will be eaten
     def eat_mushrooms(self, X: torch.Tensor, y: torch.Tensor, mushroom_idx: int):
         context, poison = X[mushroom_idx], y[mushroom_idx]
+
         try_eat = Var(np.concatenate((context, [1, 0])))
         try_reject = Var(np.concatenate((context, [0, 1])))
 
@@ -73,15 +77,17 @@ class MushroomBandit(ABC):
             r_eat = sum([self.net(try_eat) for _ in range(self.n_weight_sampling)]).item()
             r_reject = sum([self.net(try_reject) for _ in range(self.n_weight_sampling)]).item()
         eaten = r_eat > r_reject
+        
         if np.random.rand()<self.epsilon:
             eaten = (np.random.rand()<.5)
         agent_reward = self.get_reward(eaten, poison)
 
         # Get rewards and update buffer
         action = np.array([1, 0] if eaten else [0, 1])
+
         # Get rewards and add these to the buffer
-        self.bufferX = torch.vstack((self.bufferX, torch.cat((context,torch.Tensor(action)),-1)))
-        self.bufferY = torch.vstack((self.bufferY, torch.Tensor((agent_reward,))))
+        self.bufferX = torch.vstack((self.bufferX, torch.cat((context,torch.Tensor(action).to(DEVICE)),-1)))
+        self.bufferY = torch.vstack((self.bufferY, torch.Tensor((agent_reward,)).to(DEVICE)))
 
         # Calculate regret
         regret = self.calculate_regret(agent_reward,poison)
@@ -128,7 +134,6 @@ class Greedy(MushroomBandit):
         self.n_weight_sampling = 1
         self.epsilon = epsilon
         self.net = DNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
-        # self.optimizer = optim.SGD(self.net.parameters(), lr=lr)
         self.criterion = torch.nn.MSELoss()
         
     def loss_step(self, x, y, batch_id):
@@ -145,6 +150,7 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     output_dim = 1,
     weight_mu = [-0.2, 0.2],
     weight_rho = [-5, -4],
+
     prior_params = PriorParameters(
         # w_sigma=np.exp(-0),
         # b_sigma=np.exp(-0),
@@ -164,7 +170,7 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     elbo_samples = 2,
     epochs=100,
     inference_samples = 10,
-    prior_type=PRIOR_TYPES.mixture,
+    prior_type=PRIOR_TYPES.single,
     kl_reweighting_type=KL_REWEIGHTING_TYPES.paper,
     vp_variance_type=VP_VARIANCE_TYPES.paper
 )
@@ -175,8 +181,6 @@ class BBB_bandit(MushroomBandit):
         super().__init__()
         self.n_weight_sampling = 2
         self.net = BanditBNN(params=BNN_REGRESSION_PARAMETERS).to(DEVICE)
-        # self.optimizer = optim.SGD(self.net.model.parameters(), lr=lr)
-        # self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimiser, step_size=5000, gamma=0.5)
         
     def loss_step(self, x, y, batch_id):
         beta = 2 ** (64 - (batch_id + 1)) / (2 ** 64 - 1)
@@ -193,6 +197,11 @@ class BBB_bandit(MushroomBandit):
 def run_rl_training():
     # Load the data
     X, y = load_bandit()
+    
+    # Create the directory for storing plots, if it does not already exist
+    plot_dir = os.path.join(PLOTS_DIR, 'rl')
+    if not os.path.isdir(plot_dir):
+        os.makedirs(plot_dir)
 
     # Define settings
     lr=1e-4
@@ -203,7 +212,7 @@ def run_rl_training():
         'BBB':BBB_bandit()
     }
 
-    NB_STEPS = 5000
+    NB_STEPS = 50000
 
     # Initialise buffers
     for name, net in mnets.items():
@@ -229,7 +238,7 @@ def run_rl_training():
                     ax.set_ylabel('Regret') 
                     ax.legend()
                     plt.yticks(range(3), ticks)
-                    plt.savefig(str(step)+'_bandit_lr_4_big_5000_v2.jpg')
+                    plt.savefig(os.path.join(plot_dir, str(step)+'_bandit_v2.jpg'))
 
     # Plotting
     ticks = [0, 1000, 10000]
@@ -237,12 +246,16 @@ def run_rl_training():
     for name, net in mnets.items():
         new_y = interpolate.interp1d(ticks, range(3))(net.cum_regrets)
         ax.plot(new_y, label=name)
+        
     ax.set_xlabel('Steps') 
     ax.set_ylabel('Regret') 
     ax.legend()
-
     plt.yticks(range(3), ticks)
-    plt.savefig(str(NB_STEPS)+'_bandit_lr_4_big_5000_v2.jpg')
+    
+    # Save the plot
+    plt.savefig(os.path.join(plot_dir, str(NB_STEPS)+'_bandit_v2.jpg'))
+    # Show the plot
+    plt.show()
 
 
 if __name__ == '__main__':

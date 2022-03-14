@@ -20,6 +20,14 @@ If running on M1 you will need to ensure the following library versions are bein
 ```sh
 pip install --upgrade torch==1.9.0
 pip install --upgrade torchvision==0.10.0
+
+brew install hdf5
+pip3 install --no-binary=h5py h5py
+export HDF5_DIR=/opt/homebrew/opt/hdf5
+
+python3 -m pip install tensorflow-macos==2.8.0
+python3 -m pip install tensorflow-metal
+
 ```
 
 ## Execution

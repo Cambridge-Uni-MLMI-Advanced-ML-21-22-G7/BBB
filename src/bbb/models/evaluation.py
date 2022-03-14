@@ -13,9 +13,9 @@ class RegressionEval:
     # and in Tensorboard.
     eval_metric = 'RMSE'
 
-    def eval(self, test_data: DataLoader) -> float:
+    def evaluate(self, test_data: DataLoader) -> float:
         # Put model in evaluation mode
-        self.model.eval()
+        self.eval()
 
         running_err = 0
         total = 0
@@ -25,12 +25,16 @@ class RegressionEval:
                 X = X.to(DEVICE)
                 Y = Y.to(DEVICE)
 
-                pred_Y, _ = self.predict(X)
+                pred_Y, _, _ = self.predict(X)
 
                 total += self.batch_size
                 running_err += ((pred_Y - Y)*(pred_Y - Y)).sum().data
 
         self.eval_score = torch.sqrt(running_err/total)
+
+        # Record the evaluation metric score
+        self.eval_metric_hist.append(self.eval_score.item())
+
         return self.eval_score
 
 class ClassificationEval:
@@ -41,9 +45,9 @@ class ClassificationEval:
     # and in Tensorboard.
     eval_metric = 'Acc'
 
-    def eval(self, test_data: DataLoader) -> float:
+    def evaluate(self, test_data: DataLoader) -> float:
         # Put model in evaluation mode
-        self.model.eval()
+        self.eval()
 
         correct = 0
         total = 0
@@ -56,7 +60,11 @@ class ClassificationEval:
                 preds, probs = self.predict(inputs)
 
                 total += self.batch_size
-                correct += (labels == preds).sum().item()
+                correct += (labels == preds).sum()
 
         self.eval_score = correct / total
+
+        # Record the evaluation metric score
+        self.eval_metric_hist.append(self.eval_score.item())
+
         return self.eval_score

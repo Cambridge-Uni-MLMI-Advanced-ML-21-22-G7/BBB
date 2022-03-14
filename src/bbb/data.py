@@ -1,5 +1,6 @@
-from typing import Union
+
 import logging
+from typing import Union, Tuple
 import numpy as np
 import torch
 from typing import Union, Tuple
@@ -7,8 +8,11 @@ from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import T_co
 from torchvision import datasets, transforms
 import pandas as pd
+
 from bbb.config.constants import MUSHROOM_DATASET_PATH
 from bbb.utils.pytorch_setup import DEVICE
+
+
 logger = logging.getLogger(__name__)
 
 def load_mnist(train: bool, batch_size: int, shuffle: bool) -> DataLoader:
@@ -16,7 +20,9 @@ def load_mnist(train: bool, batch_size: int, shuffle: bool) -> DataLoader:
         datasets.MNIST('./data/mnist', train=train, download=True, transform=transforms.ToTensor()),
         batch_size=batch_size, 
         shuffle=shuffle,
-        drop_last=True
+        drop_last=True,  # This should be set to true, else it will disrupt average calculations
+        pin_memory=True,
+        num_workers=0
     )
 
 def load_bandit() -> Tuple[torch.Tensor, torch.Tensor]:
@@ -45,9 +51,6 @@ def load_bandit() -> Tuple[torch.Tensor, torch.Tensor]:
     y = df_to_tensor(y.copy()).unsqueeze(-1)
 
     return X,y
-
-
-
 
 class RegressionDataset(Dataset):
     def __init__(
@@ -98,7 +101,7 @@ def generate_regression_data(train: bool, size: int, batch_size: int, shuffle: b
             shuffle=shuffle,
             drop_last=True,  # This should be set to true, else it will disrupt average calculations
             pin_memory=True,
-            num_workers=8
+            num_workers=0
         )
     else:
         return DataLoader(
@@ -107,5 +110,5 @@ def generate_regression_data(train: bool, size: int, batch_size: int, shuffle: b
             shuffle=shuffle,
             drop_last=True,  # This should be set to true, else it will disrupt average calculations
             pin_memory=True,
-            num_workers=8
+            num_workers=0
         )
