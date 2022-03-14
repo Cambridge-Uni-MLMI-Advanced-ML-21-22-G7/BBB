@@ -178,7 +178,7 @@ class ClassificationDNN(ClassificationEval, BaseDNN):
 
     def forward(self, X: Tensor) -> Tensor:
         X = X.view(-1, self.input_dim)
-        return F.softmax(super().forward(X), dim=1)
+        return super().forward(X)
 
     def predict(self, X: Tensor) -> Tuple[Tensor, Tensor]:
         # Ensure tensor is assigned to correct device
@@ -188,7 +188,7 @@ class ClassificationDNN(ClassificationEval, BaseDNN):
         self.eval()
 
         # Pass the input through the model
-        probs = self.forward(X)
+        probs = F.softmax(self.forward(X), dim=1)
         
         # Select most likely class
         preds = torch.argmax(probs, dim=1)
