@@ -1,6 +1,8 @@
+import os
 from typing import List
 
 import numpy as np
+import torch
 from torch import Tensor
 import matplotlib.pyplot as plt
 
@@ -11,7 +13,7 @@ def plot_bbb_regression_predictions(
     Y_val_pred_mean: Tensor,
     Y_val_pred_var: Tensor,
     Y_val_pred_quartiles: np.array,
-    save_path: str
+    save_dir: str
 ):
     """Plot the regression predictions made by BBB.
 
@@ -23,6 +25,10 @@ def plot_bbb_regression_predictions(
     :type Y_val_pred_mean: Tensor
     :param Y_val_pred_var: variance of predictions
     :type Y_val_pred_var: Tensor
+    :param Y_val_pred_quartiles: quartiles of predictions
+    :type Y_val_pred_quartiles: Tensor
+    :param save_dir: directory to save the plot to
+    :type save_dir: str
     """
     # Initialise the figure
     fig, ax = plt.subplots(1, 1, figsize=(10,10))
@@ -53,21 +59,61 @@ def plot_bbb_regression_predictions(
     plt.show()
 
     # Save the figure
-    plt.savefig(save_path)
+    plt.savefig(os.path.join(save_dir, 'plot.png'))
 
 
-def plot_weight_samples(weight_samples: List[Tensor]):
+def plot_weight_samples(
+    weight_samples: List[Tensor],
+    save_dir: str
+):
     """Plot a historgram of the passed weights.
 
     :param weight_samples: List of sampled weights
     :type weight_samples: List[Tensor]
+    :param save_dir: directory to save the plots to
+    :type save_dir: str
     """
-    fig, ax = plt.subplots(1, 1, figsize=(10,10))
+    histogram_args = {
+        'density': True,
+        'bins': 100,
+        'alpha': 0.5
+    }
 
+    ######################
+    # Plots for each layer
+    ######################
+
+    fig, ax = plt.subplots(1, 1, figsize=(10,10))
     for i, weights in enumerate(weight_samples):
-        ax.hist(weights.flatten().detach().cpu().numpy(), density=True, alpha=0.5, label=f'Layer: {i}, Weights: {weights.shape[0]}')
+            ax.hist(weights.flatten().detach().cpu().numpy(), label=f'Layer: {i}, Weights: {weights.shape[0]}', **histogram_args)
     
-    ax.legend()
+    # Formatting of plot
     ax.set_xlabel('Weight Value')
     ax.set_ylabel('Density')
+
+    # Add legend
+    ax.legend()
+
+    # Display the plot
     plt.show()
+
+    # Save the figure
+    plt.savefig(os.path.join(save_dir, 'weights_plot.png'))
+
+    ################
+    # Combined plots
+    ################
+
+    fig, ax = plt.subplots(1, 1, figsize=(10,10))
+    comb_weight_samples = torch.vstack(weight_samples)
+    ax.hist(comb_weight_samples.flatten().detach().cpu().numpy(), **histogram_args)
+
+    # Formatting of plot
+    ax.set_xlabel('Weight Value')
+    ax.set_ylabel('Density')
+
+    # Display the plot
+    plt.show()
+
+    # Save the figure
+    plt.savefig(os.path.join(save_dir, 'comb_weights_plot.png'))
