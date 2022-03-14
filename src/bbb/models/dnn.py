@@ -39,6 +39,7 @@ class BaseDNN(BaseModel, ABC):
         self.step_size = params.step_size
         self.dropout = params.dropout
         self.dropout_p = params.dropout_p
+        self.gamma = params.gamma
 
         #######
         # Model
@@ -88,7 +89,7 @@ class BaseDNN(BaseModel, ABC):
         self.scheduler = optim.lr_scheduler.StepLR(
             self.optimizer,
             step_size=self.step_size,
-            gamma=0.5
+            gamma=self.gamma,
         )
 
     def forward(self, X: Tensor):
