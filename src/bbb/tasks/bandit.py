@@ -24,6 +24,7 @@ from bbb.models.bnn import BanditBNN
 from bbb.data import load_bandit
 
 logger = logging.getLogger(__name__)
+
 Var = lambda x, dtype=torch.FloatTensor: Variable(
     torch.from_numpy(x).type(dtype)).to(DEVICE)
 
@@ -114,7 +115,7 @@ class MushroomBandit(ABC):
         raise NotImplementedError()
 
 DNN_RL_PARAMETERS = Parameters(
-    name = "DNN_regression",
+    name = "DNN_rl",
     input_dim = 97,
     output_dim = 1,
     hidden_layers = 2,
@@ -134,9 +135,11 @@ class Greedy(MushroomBandit):
         self.epsilon = epsilon
         self.net = RegressionDNN(params=DNN_RL_PARAMETERS).to(DEVICE)
         self.criterion = torch.nn.MSELoss()
+
+        with open(os.path.join(self.net.model_save_dir, 'epsilon.txt'), 'w') as f:
+            f.write(str(self.epsilon))
         
     def loss_step(self, x, y, batch_id):
-        self.net.train()
         self.net.zero_grad()
         preds = self.net.forward(x)
         loss = self.criterion(preds, y)
@@ -145,7 +148,7 @@ class Greedy(MushroomBandit):
         return loss
 
 BNN_RL_PARAMETERS = Parameters(
-    name = "BBB_regression",
+    name = "BBB_rl",
     input_dim = 97,
     output_dim = 1,
     weight_mu_range = [-0.2, 0.2],
@@ -156,8 +159,8 @@ BNN_RL_PARAMETERS = Parameters(
         # b_sigma=np.exp(-0),
         # w_sigma_2=np.exp(-6),
         # b_sigma_2=np.exp(-6),
-        w_sigma=1,
-        b_sigma=1,
+        w_sigma=1.,
+        b_sigma=1.,
         w_sigma_2=0.2,
         b_sigma_2=0.2,
         w_mixture_weight=0.5,
@@ -181,9 +184,11 @@ class BBB_bandit(MushroomBandit):
         super().__init__()
         self.n_weight_sampling = 2
         self.net = BanditBNN(params=BNN_RL_PARAMETERS).to(DEVICE)
+
+        with open(os.path.join(self.net.model_save_dir, 'epsilon.txt'), 'w') as f:
+            f.write(str(self.epsilon))
         
     def loss_step(self, x, y, batch_id):
-        self.net.train()
         beta = 2 ** (64 - (batch_id + 1)) / (2 ** 64 - 1)
         beta = torch.Tensor((beta,)).to(DEVICE)
         self.net.optimizer.zero_grad()
@@ -224,6 +229,9 @@ def run_rl_training():
         for step in t_epoch:
             mushroom_idx = np.random.randint(X.shape[0])
             for name, net in mnets.items():
+                # Ensure the network is in training mode
+                net.net.train()
+
                 avg_loss = net.update(X, y, mushroom_idx)
 
                 # Update the loss in tqdm every 10 epochs
@@ -240,6 +248,13 @@ def run_rl_training():
                     ax.legend()
                     plt.yticks(range(3), ticks)
                     plt.savefig(os.path.join(plot_dir, str(step)+'_bandit_v2.jpg'))
+
+                    # Save the latest model
+                    torch.save(net.net.state_dict(), os.path.join(net.net.model_save_dir, 'model.pt'))
+
+    # Save the cumulative regret for each network
+    for name, net in mnets.items():
+        np.save(os.path.join(net.net.model_save_dir, 'cum_regrets.npy'), np.array(net.cum_regrets))
 
     # Plotting
     ticks = [0, 1000, 10000]
