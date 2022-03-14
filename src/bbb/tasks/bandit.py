@@ -13,7 +13,7 @@ from scipy import interpolate
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.config.parameters import Parameters, PriorParameters
 from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES, PLOTS_DIR
-from bbb.models.dnn import DNN
+from bbb.models.dnn import RegressionDNN
 
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.config.parameters import Parameters, PriorParameters
@@ -69,9 +69,8 @@ class MushroomBandit(ABC):
     # function to get which mushrooms will be eaten
     def eat_mushrooms(self, X: torch.Tensor, y: torch.Tensor, mushroom_idx: int):
         context, poison = X[mushroom_idx], y[mushroom_idx]
-
-        try_eat = Var(np.concatenate((context, [1, 0])))
-        try_reject = Var(np.concatenate((context, [0, 1])))
+        try_eat = torch.cat((context,torch.Tensor([1,0]).to(DEVICE)),-1)
+        try_reject = torch.cat((context,torch.Tensor([0,1]).to(DEVICE)),-1)
 
         with torch.no_grad():
             r_eat = sum([self.net(try_eat) for _ in range(self.n_weight_sampling)]).item()
@@ -133,7 +132,7 @@ class Greedy(MushroomBandit):
         super().__init__()
         self.n_weight_sampling = 1
         self.epsilon = epsilon
-        self.net = DNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
+        self.net = RegressionDNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
         self.criterion = torch.nn.MSELoss()
         
     def loss_step(self, x, y, batch_id):
@@ -148,8 +147,8 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     name = "BBB_regression",
     input_dim = 97,
     output_dim = 1,
-    weight_mu = [-0.2, 0.2],
-    weight_rho = [-5, -4],
+    weight_mu_range = [-0.2, 0.2],
+    weight_rho_range = [-5, -4],
 
     prior_params = PriorParameters(
         # w_sigma=np.exp(-0),
