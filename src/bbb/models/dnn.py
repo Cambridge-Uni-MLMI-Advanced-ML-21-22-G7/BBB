@@ -16,11 +16,13 @@ class BaseDNN(BaseModel, ABC):
     def __init__(self, params: Parameters, eval_mode: bool = False) -> None:
         """Vanilla DNN with customisable number of hidden layers.
 
-        This class inherits from RegressionEval and then BaseModel.
+        This class inherits from BaseModel and then ABC.
         The order here is important.
 
         :param params: model parameters
         :type params: Parameters
+        :param eval_mode: evaluation mode, defaults to False
+        :type eval_mode: bool
         """
         super().__init__(params=params, eval_mode=eval_mode)
 
@@ -114,6 +116,9 @@ class BaseDNN(BaseModel, ABC):
 
 
 class RegressionDNN(RegressionEval, BaseDNN):
+    # NOTE: This class inherits from RegressionEval and then BaseDNN
+    # The order here is important
+
     def __init__(self, params: Parameters, eval_mode: bool = False) -> None:
         super().__init__(params=params, eval_mode=eval_mode)
         
@@ -136,6 +141,9 @@ class RegressionDNN(RegressionEval, BaseDNN):
         return preds, None, None
 
 class ClassificationDNN(ClassificationEval, BaseDNN):
+    # NOTE: This class inherits from ClassificationEval and then BaseDNN
+    # The order here is important
+
     def __init__(self, params: Parameters, eval_mode: bool = False) -> None:
         super().__init__(params=params, eval_mode=eval_mode)
         
