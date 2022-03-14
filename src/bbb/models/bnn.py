@@ -93,7 +93,8 @@ class BaseBNN(BaseModel, ABC):
 
         # Scheduler
         self.scheduler = optim.lr_scheduler.StepLR(
-            self.optimizer,step_size=self.step_size,
+            self.optimizer,
+            step_size=self.step_size,
             gamma=0.5
         )
 
