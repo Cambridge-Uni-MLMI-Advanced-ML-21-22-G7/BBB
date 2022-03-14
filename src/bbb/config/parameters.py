@@ -25,6 +25,7 @@ class Parameters:
     output_dim: int
     batch_size: int
     lr: float
+    step_size: int
     epochs: int
     hidden_layers: int = 1
 
