@@ -149,8 +149,8 @@ DNN_REGRESSION_PARAMETERS = Parameters(
     step_size = 250,
     early_stopping = False,
     early_stopping_thresh = 1e-4,
-    dropout=False,
-    dropout_p=0.5
+    dropout = False,
+    dropout_p = 0.5
 )
 
 def run_dnn_regression_training():
