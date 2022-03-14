@@ -25,6 +25,9 @@ from bbb.data import load_bandit
 
 logger = logging.getLogger(__name__)
 
+lr = 1e-4
+step_size = 500
+
 Var = lambda x, dtype=torch.FloatTensor: Variable(
     torch.from_numpy(x).type(dtype)).to(DEVICE)
 
@@ -118,12 +121,12 @@ DNN_RL_PARAMETERS = Parameters(
     name = "DNN_rl",
     input_dim = 97,
     output_dim = 1,
-    hidden_layers = 2,
+    hidden_layers = 3,
     hidden_units = 100,
     batch_size = 100,
-    lr = 1e-4,
+    lr = lr,
     epochs = 100,
-    step_size=100,
+    step_size=step_size,
     early_stopping=False,
     early_stopping_thresh=1e-4
 )
@@ -156,23 +159,23 @@ BNN_RL_PARAMETERS = Parameters(
     weight_rho_range = [-5, -4],
 
     prior_params = PriorParameters(
-        # w_sigma=np.exp(-0),
-        # b_sigma=np.exp(-0),
-        # w_sigma_2=np.exp(-6),
-        # b_sigma_2=np.exp(-6),
-        w_sigma=1.,
-        b_sigma=1.,
-        w_sigma_2=0.2,
-        b_sigma_2=0.2,
+        w_sigma=np.exp(-0),
+        b_sigma=np.exp(-0),
+        w_sigma_2=np.exp(-6),
+        b_sigma_2=np.exp(-6),
+        # w_sigma=1.,
+        # b_sigma=1.,
+        # w_sigma_2=0.2,
+        # b_sigma_2=0.2,
         w_mixture_weight=0.5,
         b_mixture_weight=0.5,
     ),
     hidden_units = 100,
-    hidden_layers = 2,
+    hidden_layers = 3,
     batch_size = 64,
-    lr = 1e-4,
+    lr = lr,
     epochs=100,
-    step_size=100,
+    step_size=step_size,
     elbo_samples = 2,
     inference_samples = 10,
     prior_type=PRIOR_TYPES.single,
@@ -212,7 +215,6 @@ def run_rl_training():
         os.makedirs(plot_dir)
 
     # Define settings
-    lr=1e-4
     mnets = {
         'Greedy':Greedy(epsilon=0),
         'Greedy 1%':Greedy(epsilon=0.01),
@@ -249,7 +251,7 @@ def run_rl_training():
                     ax.set_ylabel('Regret') 
                     ax.legend()
                     plt.yticks(range(3), ticks)
-                    plt.savefig(os.path.join(plot_dir, str(step)+'_bandit_v2.jpg'))
+                    plt.savefig(os.path.join(plot_dir, str(step)+'_bandit_lr_'+str(lr) + '_step_' + str(step_size)+'.jpg'))
 
                     # Save the latest model
                     torch.save(net.net.state_dict(), os.path.join(net.net.model_save_dir, 'model.pt'))
@@ -271,7 +273,7 @@ def run_rl_training():
     plt.yticks(range(3), ticks)
     
     # Save the plot
-    plt.savefig(os.path.join(plot_dir, str(NB_STEPS)+'_bandit_v2.jpg'))
+    plt.savefig(os.path.join(plot_dir, str(step)+'_bandit_lr_'+str(lr) + '_step_' + str(step_size)+'.jpg'))
     # Show the plot
     plt.show()
 
