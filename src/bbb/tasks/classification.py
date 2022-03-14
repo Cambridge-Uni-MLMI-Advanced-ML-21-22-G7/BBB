@@ -53,6 +53,9 @@ def run_bbb_mnist_classification_training():
 
     logger.info('Completed classification training...')
 
+    accuracy = net.evaluate(X_val)
+    logger.info(f'Accuracy: {accuracy}')
+
     weight_samples = net.weight_samples()
     plot_weight_samples(weight_samples, save_dir=net.model_save_dir)
 
@@ -75,6 +78,7 @@ CNN_CLASSIFY_PARAMETERS = Parameters(
     input_dim = 28*28,
     output_dim = 10,
     hidden_units = 1200,
+    hidden_layers = 2,
     batch_size = 128,
     lr = 0.01,
     epochs = 10,
@@ -84,10 +88,28 @@ def run_cnn_mnist_classification_training():
     logger.info('Beginning classification training...')
     net = CNN(params=CNN_CLASSIFY_PARAMETERS).to(DEVICE)
 
+    logger.info('Initialized CNN...')
+
     X_train = load_mnist(train=True, batch_size=CNN_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
     X_val = load_mnist(train=False, batch_size=CNN_CLASSIFY_PARAMETERS.batch_size, shuffle=True)
 
+    logger.info('Loaded MNIST...')
+
     train_with_tqdm(net=net, train_data=X_train, epochs=CNN_CLASSIFY_PARAMETERS.epochs, eval_data=X_val)
 
-    accuracy = net.eval(X_val)
+    logger.info('Completed classification training...')
+
+    accuracy = net.evaluate(X_val)
     logger.info(f'Accuracy: {accuracy}')
+
+    weight_samples = net.weight_samples()
+    plot_weight_samples(weight_samples, save_dir=net.model_save_dir)
+
+def run_cnn_mnist_classification_evaluation(model_path: str):
+    logger.info(f'Beginning classification evaluation against {model_path}...')
+    
+    net = CNN(params=CNN_CLASSIFY_PARAMETERS, eval_mode=True).to(DEVICE)
+    net.load_saved(model_path=model_path)
+
+    weight_samples = net.weight_samples()
+    plot_weight_samples(weight_samples, save_dir=net.model_save_dir)

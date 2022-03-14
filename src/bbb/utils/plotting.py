@@ -75,7 +75,7 @@ def plot_weight_samples(
     """
     histogram_args = {
         'density': True,
-        'bins': 100,
+        'bins': 50,
         'alpha': 0.5
     }
 
@@ -85,7 +85,7 @@ def plot_weight_samples(
 
     fig, ax = plt.subplots(1, 1, figsize=(10,10))
     for i, weights in enumerate(weight_samples):
-            ax.hist(weights.flatten().detach().cpu().numpy(), label=f'Layer: {i}, Weights: {weights.shape[0]}', **histogram_args)
+            ax.hist(weights.detach().cpu().numpy(), label=f'Layer: {i}, Weights: {weights.shape[0]}', **histogram_args)
     
     # Formatting of plot
     ax.set_xlabel('Weight Value')
@@ -105,7 +105,7 @@ def plot_weight_samples(
     ################
 
     fig, ax = plt.subplots(1, 1, figsize=(10,10))
-    comb_weight_samples = torch.vstack(weight_samples)
+    comb_weight_samples = torch.hstack(weight_samples)
     ax.hist(comb_weight_samples.flatten().detach().cpu().numpy(), **histogram_args)
 
     # Formatting of plot

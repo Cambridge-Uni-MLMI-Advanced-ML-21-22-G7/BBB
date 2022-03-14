@@ -315,6 +315,9 @@ class BaseBNN(BaseModel, ABC):
         # Put model into evaluation mode
         self.eval()
 
+        ##################################
+        # Sampling weights and taking mean
+        ##################################
         # Initialise list of tensors to hold weight samples
         # Each tensor will hold samples of weights from a single layer
         weight_tensors = [
@@ -329,6 +332,16 @@ class BaseBNN(BaseModel, ABC):
         for i, layer in enumerate([l for l in self.model if isinstance(l, BFC)]):
             for j in range(self.inference_samples):
                 weight_tensors[i][:, j] = layer.w_var_post.sample().flatten()
+            
+             # Take the mean across the samples
+            weight_tensors[i] = weight_tensors[i].mean(axis=-1)
+
+        ####################
+        # Using mean weights
+        ####################
+        # weight_tensors = []
+        # for layer in [l for l in self.model if isinstance(l, BFC)]:
+        #     weight_tensors.append(layer.w_var_post.mu.flatten())
 
         return weight_tensors
 
