@@ -113,7 +113,7 @@ class MushroomBandit(ABC):
     def loss_step(self, X: torch.Tensor, y: torch.Tensor):
         raise NotImplementedError()
 
-DNN_REGRESSION_PARAMETERS = Parameters(
+DNN_RL_PARAMETERS = Parameters(
     name = "DNN_regression",
     input_dim = 97,
     output_dim = 1,
@@ -132,10 +132,11 @@ class Greedy(MushroomBandit):
         super().__init__()
         self.n_weight_sampling = 1
         self.epsilon = epsilon
-        self.net = RegressionDNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
+        self.net = RegressionDNN(params=DNN_RL_PARAMETERS).to(DEVICE)
         self.criterion = torch.nn.MSELoss()
         
     def loss_step(self, x, y, batch_id):
+        self.net.train()
         self.net.zero_grad()
         preds = self.net.forward(x)
         loss = self.criterion(preds, y)
@@ -143,7 +144,7 @@ class Greedy(MushroomBandit):
         self.net.optimizer.step()
         return loss
 
-BNN_REGRESSION_PARAMETERS = Parameters(
+BNN_RL_PARAMETERS = Parameters(
     name = "BBB_regression",
     input_dim = 97,
     output_dim = 1,
@@ -179,9 +180,10 @@ class BBB_bandit(MushroomBandit):
     def __init__(self):
         super().__init__()
         self.n_weight_sampling = 2
-        self.net = BanditBNN(params=BNN_REGRESSION_PARAMETERS).to(DEVICE)
+        self.net = BanditBNN(params=BNN_RL_PARAMETERS).to(DEVICE)
         
     def loss_step(self, x, y, batch_id):
+        self.net.train()
         beta = 2 ** (64 - (batch_id + 1)) / (2 ** 64 - 1)
         beta = torch.Tensor((beta,)).to(DEVICE)
         self.net.optimizer.zero_grad()
