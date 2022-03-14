@@ -62,6 +62,46 @@ def plot_bbb_regression_predictions(
     plt.savefig(os.path.join(save_dir, 'plot.png'))
 
 
+def plot_dnn_regression_predictions(
+    X_train_arr: Tensor,
+    X_val_arr: Tensor,
+    Y_val_pred: Tensor,
+    save_dir: str
+):
+    """Plot the regression predictions made by BBB.
+
+    :param X_train_arr: training data
+    :type X_train_arr: Tensor
+    :param X_val_arr: evaluation data
+    :type X_val_arr: Tensor
+    :param Y_val_pred: predictions
+    :type Y_val_pred: Tensor
+    :param save_dir: directory to save the plot to
+    :type save_dir: str
+    """
+    # Initialise the figure
+    fig, ax = plt.subplots(1, 1, figsize=(10,10))
+
+    # Plot the data points
+    ax.plot(X_train_arr[:,0], X_train_arr[:,1], label='Original', ls='', marker='x')
+    
+    # Plot the predictive mean
+    ax.plot(X_val_arr[:,0], Y_val_pred, marker='x', label='Prediction')
+
+    # Formatting of plot
+    ax.set_xlim([-0.2, 1.3])
+    ax.set_ylim([-0.5, 1.3])
+
+    # Add legend
+    ax.legend()
+
+    # Display the plot
+    plt.show()
+
+    # Save the figure
+    plt.savefig(os.path.join(save_dir, 'plot.png'))
+
+
 def plot_weight_samples(
     weight_samples: List[Tensor],
     save_dir: str
