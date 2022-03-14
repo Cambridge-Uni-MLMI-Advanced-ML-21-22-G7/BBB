@@ -11,7 +11,7 @@ from bbb.utils.tqdm import train_with_tqdm
 from bbb.utils.plotting import plot_weight_samples, plot_bbb_regression_predictions
 from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES
 from bbb.config.parameters import Parameters, PriorParameters
-from bbb.models.dnn import DNN
+from bbb.models.dnn import RegressionDNN
 from bbb.models.bnn import RegressionBNN
 from bbb.data import generate_regression_data
 
@@ -126,8 +126,8 @@ def _dnn_regression_evaluation(net: nn.Module, X_train: DataLoader = None, X_val
     X_train_arr = np.array(X_train.dataset, dtype=float)
     X_val_arr = np.array(X_val.dataset, dtype=float)
 
-    Y_val_pred, _ = net.predict(X_val.dataset[:][0])
-    Y_val_pred = Y_val_pred.detach().numpy().flatten()
+    Y_val_pred, _, _ = net.predict(X_val.dataset[:][0])
+    Y_val_pred = Y_val_pred.detach().cpu().numpy().flatten()
     
     plt.plot(X_train_arr[:,0], X_train_arr[:,1], label='Original')
     plt.plot(X_val_arr[:,0], Y_val_pred, marker='x', label='Prediction')
@@ -150,7 +150,7 @@ DNN_REGRESSION_PARAMETERS = Parameters(
 
 def run_dnn_regression_training():
     logger.info('Beginning regression training...')
-    net = DNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
+    net = RegressionDNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
 
     X_train = generate_regression_data(train=True, size=10*BNN_REGRESSION_PARAMETERS.batch_size, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
     X_val = generate_regression_data(train=False, size=DNN_REGRESSION_PARAMETERS.batch_size, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
@@ -162,6 +162,6 @@ def run_dnn_regression_training():
 
 def run_dnn_regression_evaluation(model_path: str):
     logger.info(f'Beginning regression evaluation against {model_path}...')
-    net = DNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
+    net = RegressionDNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
     net.load_saved(model_path=model_path)
     _dnn_regression_evaluation(net)

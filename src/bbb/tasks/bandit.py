@@ -14,7 +14,7 @@ from bbb.config.parameters import Parameters, PriorParameters
 from bbb.config.constants import (
     KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES, PLOTS_DIR
 )
-from bbb.models.dnn import DNN
+from bbb.models.dnn import RegressionDNN
 from bbb.models.bnn import BanditBNN
 from bbb.data import load_bandit
 
@@ -129,7 +129,7 @@ class Greedy(MushroomBandit):
         super().__init__(**kwargs)
         self.n_weight_sampling = 1
         self.epsilon = epsilon
-        self.net = DNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
+        self.net = RegressionDNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
         self.optimizer = optim.SGD(self.net.parameters(), lr=lr)
         self.criterion = torch.nn.MSELoss()
         

@@ -6,7 +6,7 @@ from bbb.utils.plotting import plot_weight_samples
 from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES
 from bbb.config.parameters import Parameters, PriorParameters
 from bbb.models.bnn import ClassificationBNN
-from bbb.models.cnn import CNN
+from bbb.models.dnn import ClassificationDNN
 from bbb.data import load_mnist
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     input_dim = 28*28,
     output_dim = 10,
     hidden_units = 1200,
-    hidden_layers = 2,
+    hidden_layers = 3,
     weight_mu_range = [-0.2, 0.2],
     weight_rho_range = [-5, -4],
     prior_params = PriorParameters(
@@ -78,7 +78,7 @@ CNN_CLASSIFY_PARAMETERS = Parameters(
     input_dim = 28*28,
     output_dim = 10,
     hidden_units = 1200,
-    hidden_layers = 2,
+    hidden_layers = 3,
     batch_size = 128,
     lr = 0.01,
     epochs = 10,
@@ -86,7 +86,7 @@ CNN_CLASSIFY_PARAMETERS = Parameters(
 
 def run_cnn_mnist_classification_training():
     logger.info('Beginning classification training...')
-    net = CNN(params=CNN_CLASSIFY_PARAMETERS).to(DEVICE)
+    net = ClassificationDNN(params=CNN_CLASSIFY_PARAMETERS).to(DEVICE)
 
     logger.info('Initialized CNN...')
 
@@ -108,7 +108,7 @@ def run_cnn_mnist_classification_training():
 def run_cnn_mnist_classification_evaluation(model_path: str):
     logger.info(f'Beginning classification evaluation against {model_path}...')
     
-    net = CNN(params=CNN_CLASSIFY_PARAMETERS, eval_mode=True).to(DEVICE)
+    net = ClassificationDNN(params=CNN_CLASSIFY_PARAMETERS, eval_mode=True).to(DEVICE)
     net.load_saved(model_path=model_path)
 
     weight_samples = net.weight_samples()
