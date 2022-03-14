@@ -47,7 +47,7 @@ def _bbb_regression_evaluation(net: nn.Module, X_train: DataLoader = None, X_val
         Y_val_pred_mean=Y_val_pred_mean,
         Y_val_pred_var=Y_val_pred_var,
         Y_val_pred_quartiles=Y_val_pred_quartiles,
-        save_path=net.save_plot_path
+        save_dir=net.model_save_dir
     )
 
 
@@ -92,7 +92,7 @@ def run_bbb_regression_training():
     train_with_tqdm(net=net, train_data=X_train, eval_data=X_val, epochs=BNN_REGRESSION_PARAMETERS.epochs)
 
     weight_samples = net.weight_samples()
-    plot_weight_samples(weight_samples)
+    plot_weight_samples(weight_samples, save_dir=net.model_save_dir)
 
     _bbb_regression_evaluation(net, X_train=X_train, X_val=X_val)
 
@@ -102,8 +102,12 @@ def run_bbb_regression_evaluation(model_path: str):
     
     logger.info(BNN_REGRESSION_PARAMETERS)
 
-    net = RegressionBNN(params=BNN_REGRESSION_PARAMETERS).to(DEVICE)
+    net = RegressionBNN(params=BNN_REGRESSION_PARAMETERS, eval_mode=True).to(DEVICE)
     net.load_saved(model_path=model_path)
+
+    weight_samples = net.weight_samples()
+    plot_weight_samples(weight_samples, save_dir=net.model_save_dir)
+
     _bbb_regression_evaluation(net)
 
 

@@ -6,7 +6,7 @@ from bbb.tasks.regression import (
     run_bbb_regression_training, run_bbb_regression_evaluation, run_dnn_regression_training, run_dnn_regression_evaluation
 )
 from bbb.tasks.classification import (
-    run_bbb_mnist_classification_training, run_cnn_mnist_classification_training
+    run_bbb_mnist_classification_training, run_bbb_mnist_classification_evaluation, run_cnn_mnist_classification_training
 )
 from bbb.tasks.bandit import run_rl_training
 
@@ -79,7 +79,7 @@ def main() -> None:
                 run_cnn_mnist_classification_training()
         else:
             if args.evaluate:
-                raise ArgumentError('Method not yet implemented')
+                run_bbb_mnist_classification_evaluation(args.evaluate)
             else:
                 run_bbb_mnist_classification_training()
     elif args.model_type == 'rl':

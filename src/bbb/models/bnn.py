@@ -25,8 +25,8 @@ class BaseBNN(BaseModel, ABC):
     This class inherits from BaseModel, and is inherited by specific
     Regression and Classification classes. See below.
     """
-    def __init__(self, params: Parameters) -> None:
-        super().__init__(params=params)
+    def __init__(self, params: Parameters, eval_mode: bool = False) -> None:
+        super().__init__(params=params, eval_mode=eval_mode)
 
         # Parameters
         self.input_dim = params.input_dim
@@ -355,8 +355,8 @@ class RegressionBNN(RegressionEval, BaseBNN):
     # NOTE: This class inherits from RegressionEval and then BaseBNN
     # The order here is important
 
-    def __init__(self, params: Parameters) -> None:
-        super().__init__(params=params)
+    def __init__(self, params: Parameters, eval_mode: bool = False) -> None:
+        super().__init__(params=params, eval_mode=eval_mode)
         
         # Assert that regression_likelihood_noise has been provided
         assert type(params.regression_likelihood_noise) == float
