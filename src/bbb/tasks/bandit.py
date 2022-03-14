@@ -8,24 +8,29 @@ import matplotlib.pyplot as plt
 import torch
 import torch.optim as optim
 from torch.autograd import Variable
+from scipy import interpolate
 
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.config.parameters import Parameters, PriorParameters
-from bbb.config.constants import (
-    KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES, PLOTS_DIR
-)
-from bbb.models.dnn import RegressionDNN
+from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES, PLOTS_DIR
+from bbb.models.dnn import DNN
+
+from bbb.utils.pytorch_setup import DEVICE
+from bbb.config.parameters import Parameters, PriorParameters
+# from bbb.config.constants import (
+#     KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES, PLOTS_DIR
+# )
 from bbb.models.bnn import BanditBNN
 from bbb.data import load_bandit
 
-
 logger = logging.getLogger(__name__)
-
+Var = lambda x, dtype=torch.FloatTensor: Variable(
+    torch.from_numpy(x).type(dtype)).to(DEVICE)
 
 # coding a class for this
 class MushroomBandit(ABC):
     # initializing
-    def __init__(self, X, y,n_weight_sampling=2):
+    def __init__(self, n_weight_sampling=2):
         self.epsilon = 0
         self.net = None
         self.loss = None
@@ -64,16 +69,15 @@ class MushroomBandit(ABC):
     # function to get which mushrooms will be eaten
     def eat_mushrooms(self, X: torch.Tensor, y: torch.Tensor, mushroom_idx: int):
         context, poison = X[mushroom_idx], y[mushroom_idx]
-        # try_eat = Var(np.concatenate((context, [1, 0])))
-        # try_reject = Var(np.concatenate((context, [0, 1])))
-        try_eat = torch.cat((context,torch.Tensor([1, 0]).to(DEVICE)),-1)
-        try_reject = torch.cat((context,torch.Tensor([0, 1]).to(DEVICE)),-1)
+
+        try_eat = Var(np.concatenate((context, [1, 0])))
+        try_reject = Var(np.concatenate((context, [0, 1])))
 
         with torch.no_grad():
             r_eat = sum([self.net(try_eat) for _ in range(self.n_weight_sampling)]).item()
             r_reject = sum([self.net(try_reject) for _ in range(self.n_weight_sampling)]).item()
         eaten = r_eat > r_reject
-
+        
         if np.random.rand()<self.epsilon:
             eaten = (np.random.rand()<.5)
         agent_reward = self.get_reward(eaten, poison)
@@ -117,7 +121,7 @@ DNN_REGRESSION_PARAMETERS = Parameters(
     hidden_layers = 2,
     hidden_units = 100,
     batch_size = 100,
-    lr = 1e-3,
+    lr = 1e-4,
     epochs = 100,
     early_stopping=False,
     early_stopping_thresh=1e-4
@@ -125,32 +129,35 @@ DNN_REGRESSION_PARAMETERS = Parameters(
 
 # Class for Greedy agents
 class Greedy(MushroomBandit):
-    def __init__(self, epsilon=0, lr=2e-5, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, epsilon=0):
+        super().__init__()
         self.n_weight_sampling = 1
         self.epsilon = epsilon
-        self.net = RegressionDNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
-        self.optimizer = optim.SGD(self.net.parameters(), lr=lr)
+        self.net = DNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
         self.criterion = torch.nn.MSELoss()
         
     def loss_step(self, x, y, batch_id):
-        
         self.net.zero_grad()
         preds = self.net.forward(x)
         loss = self.criterion(preds, y)
         loss.backward()
-        self.optimizer.step()
+        self.net.optimizer.step()
         return loss
 
 BNN_REGRESSION_PARAMETERS = Parameters(
     name = "BBB_regression",
     input_dim = 97,
     output_dim = 1,
-    weight_mu_range = [-1, 1],
-    weight_rho_range = [-5, -4],
+    weight_mu = [-0.2, 0.2],
+    weight_rho = [-5, -4],
+
     prior_params = PriorParameters(
-        w_sigma=1.,
-        b_sigma=1.,
+        # w_sigma=np.exp(-0),
+        # b_sigma=np.exp(-0),
+        # w_sigma_2=np.exp(-6),
+        # b_sigma_2=np.exp(-6),
+        w_sigma=1,
+        b_sigma=1,
         w_sigma_2=0.2,
         b_sigma_2=0.2,
         w_mixture_weight=0.5,
@@ -158,10 +165,10 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     ),
     hidden_units = 100,
     hidden_layers = 2,
-    batch_size = 1,
-    lr = 1e-3,
-    epochs = 100,
+    batch_size = 64,
+    lr = 1e-4,
     elbo_samples = 2,
+    epochs=100,
     inference_samples = 10,
     prior_type=PRIOR_TYPES.single,
     kl_reweighting_type=KL_REWEIGHTING_TYPES.paper,
@@ -170,39 +177,42 @@ BNN_REGRESSION_PARAMETERS = Parameters(
 
 # Class for BBB agents
 class BBB_bandit(MushroomBandit):
-    def __init__(self, lr=2e-5, **kwargs):
-        super().__init__(**kwargs)
-        self.n_weight_sampling = 1
+    def __init__(self):
+        super().__init__()
+        self.n_weight_sampling = 2
         self.net = BanditBNN(params=BNN_REGRESSION_PARAMETERS).to(DEVICE)
-        self.optimizer = optim.SGD(self.net.model.parameters(), lr=lr)
         
     def loss_step(self, x, y, batch_id):
         beta = 2 ** (64 - (batch_id + 1)) / (2 ** 64 - 1)
         beta = torch.Tensor((beta,)).to(DEVICE)
-        self.net.model.train()
-        self.net.zero_grad()
+        self.net.optimizer.zero_grad()
         num_samples = 2
         loss = self.net.sample_ELBO(x, y, beta,num_samples)
         net_loss = loss[0]
         net_loss.backward()
-        self.optimizer.step()
+        self.net.optimizer.step()
         return net_loss.item()
 
 
 def run_rl_training():
     # Load the data
     X, y = load_bandit()
+    
+    # Create the directory for storing plots, if it does not already exist
+    plot_dir = os.path.join(PLOTS_DIR, 'rl')
+    if not os.path.isdir(plot_dir):
+        os.makedirs(plot_dir)
 
     # Define settings
-    lr=1e-5
+    lr=1e-4
     mnets = {
-        # 'Greedy':Greedy(X=X, y=y, lr=lr, epsilon=0),
-        # 'Greedy 1%':Greedy(X=X, y=y, lr=lr, epsilon=0.01),
-        # 'Greedy 5%':Greedy(X=X, y=y, lr=lr, epsilon=0.05),
-        'BBB':BBB_bandit(X=X, y=y, lr=lr)
+        'Greedy':Greedy(epsilon=0),
+        'Greedy 1%':Greedy(epsilon=0.01),
+        'Greedy 5%':Greedy(epsilon=0.05),
+        'BBB':BBB_bandit()
     }
 
-    NB_STEPS = 10000
+    NB_STEPS = 50000
 
     # Initialise buffers
     for name, net in mnets.items():
@@ -218,23 +228,32 @@ def run_rl_training():
                 # Update the loss in tqdm every 10 epochs
                 if not step%10:
                     t_epoch.set_postfix_str(f'Loss: {avg_loss:.5f}')
+                if not step%5000:
+                    ticks = [0, 1000, 10000]
+                    fig, ax = plt.subplots() 
+                    for name, net in mnets.items():
+                        new_y = interpolate.interp1d(ticks, range(3),fill_value="extrapolate")(net.cum_regrets)
+                        ax.plot(new_y, label=name)
+                    ax.set_xlabel('Steps') 
+                    ax.set_ylabel('Regret') 
+                    ax.legend()
+                    plt.yticks(range(3), ticks)
+                    plt.savefig(os.path.join(plot_dir, str(step)+'_bandit_v2.jpg'))
 
     # Plotting
+    ticks = [0, 1000, 10000]
     fig, ax = plt.subplots() 
     for name, net in mnets.items():
-        ax.plot(net.cum_regrets, label=name)
+        new_y = interpolate.interp1d(ticks, range(3))(net.cum_regrets)
+        ax.plot(new_y, label=name)
+        
     ax.set_xlabel('Steps') 
     ax.set_ylabel('Regret') 
     ax.legend()
-
-    # Create the directory for storing plots, if it does not already exist
-    plot_dir = os.path.join(PLOTS_DIR, 'rl')
-    if not os.path.isdir(plot_dir):
-        os.makedirs(plot_dir)
-
+    plt.yticks(range(3), ticks)
+    
     # Save the plot
-    plt.savefig(os.path.join(plot_dir, str(NB_STEPS)+'_bandit_v1.jpg'))
-
+    plt.savefig(os.path.join(plot_dir, str(NB_STEPS)+'_bandit_v2.jpg'))
     # Show the plot
     plt.show()
 
