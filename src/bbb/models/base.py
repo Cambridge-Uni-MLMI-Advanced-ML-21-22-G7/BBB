@@ -8,7 +8,7 @@ from torch.utils.tensorboard import SummaryWriter
 from bbb.config.parameters import Parameters
 
 class BaseModel(torch.nn.Module):
-    def __init__(self, params: Parameters) -> None:
+    def __init__(self, params: Parameters, eval_mode: bool = False) -> None:
         """Base model class from which all other models are derived.
         
         Methods and parameters common to all model types should be
@@ -16,6 +16,8 @@ class BaseModel(torch.nn.Module):
 
         :param params: model parameters
         :type params: Parameters
+        :param eval_mode: evaluation mode, defaults to False
+        :type eval_mode: bool
         """
         super().__init__()
 
@@ -25,7 +27,10 @@ class BaseModel(torch.nn.Module):
         self.init_time_str =  datetime.utcnow().strftime("%Y-%m-%d-%H.%M.%S")
 
         # Create a timestamped directory for the model results
-        self.model_save_dir = os.path.join(params.model_save_basedir, params.name, self.init_time_str)
+        if eval_mode:
+            self.model_save_dir = os.path.join(params.model_save_basedir, params.name, 'eval', self.init_time_str)
+        else:
+            self.model_save_dir = os.path.join(params.model_save_basedir, params.name, self.init_time_str)
         if not os.path.exists(self.model_save_dir):
             os.makedirs(self.model_save_dir)
 
@@ -35,7 +40,6 @@ class BaseModel(torch.nn.Module):
         # Details for saving model training history
         self.save_loss_path = os.path.join(self.model_save_dir, f'loss.npy')
         self.save_eval_metric_path = os.path.join(self.model_save_dir, f'eval_metric.npy')
-        self.save_plot_path = os.path.join(self.model_save_dir, f'plot.png')
 
         # Save the parameters used to run the model
         self.save_params_path = os.path.join(self.model_save_dir, f'params.txt')
