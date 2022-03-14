@@ -2,6 +2,7 @@ import logging
 
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.utils.tqdm import train_with_tqdm
+from bbb.utils.plotting import plot_weight_samples
 from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES
 from bbb.config.parameters import Parameters, PriorParameters
 from bbb.models.bnn import ClassificationBNN
@@ -20,7 +21,7 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     input_dim = 28*28,
     output_dim = 10,
     hidden_units = 1200,
-    hidden_layers=3,
+    hidden_layers = 2,
     weight_mu_range = [-0.2, 0.2],
     weight_rho_range = [-5, -4],
     prior_params = PriorParameters(
@@ -51,6 +52,18 @@ def run_bbb_mnist_classification_training():
     train_with_tqdm(net=net, train_data=X_train, epochs=BBB_CLASSIFY_PARAMETERS.epochs, eval_data=X_val)
 
     logger.info('Completed classification training...')
+
+    weight_samples = net.weight_samples()
+    plot_weight_samples(weight_samples, save_dir=net.model_save_dir)
+
+def run_bbb_mnist_classification_evaluation(model_path: str):
+    logger.info(f'Beginning classification evaluation against {model_path}...')
+    
+    net = ClassificationBNN(params=BBB_CLASSIFY_PARAMETERS, eval_mode=True).to(DEVICE)
+    net.load_saved(model_path=model_path)
+
+    weight_samples = net.weight_samples()
+    plot_weight_samples(weight_samples, save_dir=net.model_save_dir)
 
 
 #############
