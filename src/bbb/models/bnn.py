@@ -46,6 +46,7 @@ class BaseBNN(BaseModel, ABC):
         self.kl_reweighting_type = params.kl_reweighting_type
         self.vp_variance_type = params.vp_variance_type
         self.local_reparam_trick = params.local_reparam_trick
+        self.gamma = params.gamma
 
         # If using local reparameterisation trick the prior must be Gaussian
         # This is due to the exact calculation of the KL divergence
@@ -95,7 +96,7 @@ class BaseBNN(BaseModel, ABC):
         self.scheduler = optim.lr_scheduler.StepLR(
             self.optimizer,
             step_size=self.step_size,
-            gamma=0.5
+            gamma=self.gamma
         )
 
     def forward(self, X: Tensor) -> Tensor:
