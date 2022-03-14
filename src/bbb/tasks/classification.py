@@ -81,9 +81,10 @@ DNN_CLASSIFY_PARAMETERS = Parameters(
     hidden_units = 1200,
     hidden_layers = 3,
     batch_size = 128,
-    lr = 0.01,
+    lr = 0.005,
     epochs = 300,
     step_size = 75,
+    gamma = 0.3,
     dropout = False,
     dropout_p = 0.5
 )

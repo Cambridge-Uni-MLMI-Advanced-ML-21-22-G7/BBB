@@ -25,8 +25,10 @@ class Parameters:
     output_dim: int
     batch_size: int
     lr: float
-    step_size: int          # Optimiser step size
+    step_size: int          # Scheduler LR step size (every X epochs)
     epochs: int
+
+    gamma: float = 0.1      # Multiplicative LR decay factor
     hidden_layers: int = 1
 
     # Parameters common to some models
