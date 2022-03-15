@@ -18,25 +18,36 @@ logger = logging.getLogger(__name__)
 
 BBB_CLASSIFY_PARAMETERS = Parameters(
     name = "BBB_classification",
+    batch_size = 128,
+    epochs = 300,
+    # Architecture
     input_dim = 28*28,
     output_dim = 10,
     hidden_units = 1200,
     hidden_layers = 3,
+    # Paper choices
+    prior_type = PRIOR_TYPES.single,
+    kl_reweighting_type = KL_REWEIGHTING_TYPES.paper,
+    vp_variance_type = VP_VARIANCE_TYPES.paper,
+    local_reparam_trick=False,
+    # Variational Inference
     weight_mu_range = [-0.2, 0.2],
     weight_rho_range = [-5, -4],
     prior_params = PriorParameters(
         w_sigma=1.,
         b_sigma=1.,
+        w_sigma_2=0.2,
+        b_sigma_2=0.2,
+        w_mixture_weight=0.5,
+        b_mixture_weight=0.5,
     ),
-    batch_size = 128,
-    lr = 1e-4,
-    epochs = 300,
-    step_size = 75,
     elbo_samples = 2,
     inference_samples = 10,
-    prior_type = PRIOR_TYPES.single,
-    kl_reweighting_type = KL_REWEIGHTING_TYPES.paper,
-    vp_variance_type = VP_VARIANCE_TYPES.paper
+    # Optimiser
+    opt_choice = 'Adam',
+    lr = 1e-4,
+    # LR Scheduler
+    step_size = 75,
 )
 
 def run_bbb_mnist_classification_training():
@@ -76,17 +87,22 @@ def run_bbb_mnist_classification_evaluation(model_path: str):
 
 DNN_CLASSIFY_PARAMETERS = Parameters(
     name = "DNN_classification",
+    batch_size = 128,
+    epochs = 300,
+    # Architecture
     input_dim = 28*28,
     output_dim = 10,
     hidden_units = 1200,
     hidden_layers = 3,
-    batch_size = 128,
+    # Optimiser
+    opt_choice = 'Adam',
     lr = 0.005,
-    epochs = 300,
+    # LR Scheduler
     step_size = 75,
     gamma = 0.3,
+    # Dropout
     dropout = False,
-    dropout_p = 0.5
+    dropout_p = 0.5,
 )
 
 def run_dnn_mnist_classification_training():

@@ -30,16 +30,21 @@ class BaseDNN(BaseModel, ABC):
         # Parameters
         ############
 
+        self.batch_size = params.batch_size
+        # Architecture
         self.input_dim = params.input_dim
         self.output_dim = params.output_dim
         self.hidden_layers = params.hidden_layers
         self.hidden_units = params.hidden_units
-        self.batch_size = params.batch_size
+        # Optimiser
+        self.opt_choice = params.opt_choice
         self.lr = params.lr
+        # LR Scheduler
         self.step_size = params.step_size
+        self.gamma = params.gamma
+        # Dropout
         self.dropout = params.dropout
         self.dropout_p = params.dropout_p
-        self.gamma = params.gamma
 
         #######
         # Model
@@ -78,7 +83,7 @@ class BaseDNN(BaseModel, ABC):
         ###########
         # Optimizer
         ###########
-        self.optimizer = optim.Adam(
+        self.optimizer = getattr(optim, self.opt_choice)(
             self.parameters(),
             lr=self.lr
         )
