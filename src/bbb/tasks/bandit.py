@@ -26,7 +26,7 @@ from bbb.data import load_bandit
 logger = logging.getLogger(__name__)
 lr = 1e-4
 step_size = 500
-
+gamma = 0.5
 Var = lambda x, dtype=torch.FloatTensor: Variable(
     torch.from_numpy(x).type(dtype)).to(DEVICE)
 
@@ -101,7 +101,7 @@ class MushroomBandit(ABC):
         self.bufferX[self.pointer] = torch.cat((context,action),-1)
         self.bufferY[self.pointer] = torch.Tensor((agent_reward,)).to(DEVICE)
         self.bufferZ[self.pointer] = poison
-        if self.pointer >= 4096:
+        if self.pointer >= 4095:
             self.pointer = 0
         else:
             self.pointer += 1
@@ -139,6 +139,7 @@ DNN_RL_PARAMETERS = Parameters(
     hidden_units = 100,
     batch_size = 64,
     lr = lr,
+    gamma = gamma,
     epochs = 1000,
     step_size=step_size,
     early_stopping=False,
@@ -189,6 +190,7 @@ BNN_RL_PARAMETERS = Parameters(
     hidden_layers = 3,
     batch_size = 64,
     lr = lr,
+    gamma = gamma,
     epochs=1000,
     step_size=step_size,
     elbo_samples = 2,
@@ -242,7 +244,7 @@ def run_rl_training():
         'BBB':BBB_bandit()
     }
 
-    NB_STEPS = 50000
+    NB_STEPS = 10
 
     # Initialise buffers
     for name, net in mnets.items():
@@ -257,9 +259,8 @@ def run_rl_training():
                 net.net.train()
                 if not step%4096:
                     result = torch.cat((net.bufferX, net.bufferY,net.bufferZ),1)
-                    torch.save(result, os.path.join(info_dir, name +'_' +str(step)+'_bandit_lr_'+str(lr) + '_step_' + str(step_size)+'_mushrooms.pt'))
-                    # torch.save(net.bufferY, os.path.join(net.net.model_save_dir, 'mushrooms.txt'))
-
+                    filename = name + '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,step) + '.pt'
+                    torch.save(result, os.path.join(info_dir, filename))
 
                 avg_loss = net.update(X, y, mushroom_idx)
 
@@ -267,40 +268,44 @@ def run_rl_training():
                 if not step%10:
                     t_epoch.set_postfix_str(f'Loss: {avg_loss:.5f}')
                 if not step%5000:
-                    ticks = [0, 1000, 10000]
+                    ticks = [0, 1000, 10000,100000]
                     fig, ax = plt.subplots() 
                     for name, net in mnets.items():
-                        new_y = interpolate.interp1d(ticks, range(3),fill_value="extrapolate")(net.cum_regrets)
+                        new_y = interpolate.interp1d(ticks, range(4),fill_value="extrapolate")(net.cum_regrets)
                         ax.plot(new_y, label=name)
                     ax.set_xlabel('Steps') 
                     ax.set_ylabel('Regret') 
                     ax.legend()
-                    plt.yticks(range(3), ticks)
-                    plt.savefig(os.path.join(plot_dir, str(step)+'_bandit_lr_'+str(lr) + '_step_' + str(step_size)+'.jpg'))
+                    plt.yticks(range(4), ticks)
+                    filename = name + '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,step) + '.jpg'
+                    plt.savefig(os.path.join(plot_dir, filename))
 
                     # Save the latest model
                     torch.save(net.net.state_dict(), os.path.join(net.net.model_save_dir, 'model.pt'))
-                    result = torch.cat((net.bufferX, net.bufferY,net.bufferZ),1)
-                    torch.save(result, os.path.join(info_dir, name +'_' +str(step)+'_bandit_lr_'+str(lr) + '_step_' + str(step_size)+'_mushrooms.pt'))
+                    
 
     # Save the cumulative regret for each network
     for name, net in mnets.items():
         np.save(os.path.join(net.net.model_save_dir, 'cum_regrets.npy'), np.array(net.cum_regrets))
+        result = torch.cat((net.bufferX, net.bufferY,net.bufferZ),1)
+        filename = name + '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final') + '.pt'
+        torch.save(result, os.path.join(info_dir, filename))
 
     # Plotting
-    ticks = [0, 1000, 10000]
+    ticks = [0, 1000, 10000,100000]
     fig, ax = plt.subplots() 
     for name, net in mnets.items():
-        new_y = interpolate.interp1d(ticks, range(3))(net.cum_regrets)
+        new_y = interpolate.interp1d(ticks, range(4))(net.cum_regrets)
         ax.plot(new_y, label=name)
         
     ax.set_xlabel('Steps') 
     ax.set_ylabel('Regret') 
     ax.legend()
-    plt.yticks(range(3), ticks)
+    plt.yticks(range(4), ticks)
     
     # Save the plot
-    plt.savefig(os.path.join(plot_dir, str(NB_STEPS)+'_bandit3_lr_'+str(lr) + '_step_' + str(step_size)+'.jpg'))
+    filename = name + '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final') + '.jpg'
+    plt.savefig(os.path.join(plot_dir, filename))
     # Show the plot
     # plt.show()
 
