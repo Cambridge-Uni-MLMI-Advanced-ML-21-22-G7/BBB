@@ -417,12 +417,7 @@ class ClassificationBNN(ClassificationEval, BaseBNN):
     def forward(self, X: Tensor) -> Tensor:
         # Flatten the image
         X = X.view(-1, self.input_dim)
-        return F.softmax(super().forward(X), dim=1)
-
-    def inference(self, X: Tensor) -> Tensor:
-        # Flatten the image
-        x = x.view(-1, self.input_dim)
-        return F.softmax(super().inference(X), dim=1)
+        return super().forward(X)
 
     def get_nll(self, outputs: torch.Tensor, targets: torch.Tensor) -> float:
         # NLL calculated as cross entropy
@@ -440,7 +435,7 @@ class ClassificationBNN(ClassificationEval, BaseBNN):
 
         # Repeat forward (sampling) <inference_samples> times to create probability distribution
         for _ in torch.arange(self.inference_samples):
-            output = self.forward(X)
+            output = F.softmax(super().forward(X), dim=1)
 
             # Incremental update of average
             probs += output / self.inference_samples
