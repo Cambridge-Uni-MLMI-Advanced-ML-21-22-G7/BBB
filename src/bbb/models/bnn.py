@@ -435,7 +435,7 @@ class ClassificationBNN(ClassificationEval, BaseBNN):
 
         # Repeat forward (sampling) <inference_samples> times to create probability distribution
         for _ in torch.arange(self.inference_samples):
-            output = F.softmax(super().forward(X), dim=1)
+            output = F.softmax(self.forward(X), dim=1)
 
             # Incremental update of average
             probs += output / self.inference_samples
