@@ -167,6 +167,8 @@ DNN_REGRESSION_PARAMETERS = Parameters(
 
 def run_dnn_regression_training():
     logger.info('Beginning regression training...')
+    logger.info(DNN_REGRESSION_PARAMETERS)
+    
     net = RegressionDNN(params=DNN_REGRESSION_PARAMETERS).to(DEVICE)
 
     X_train = generate_regression_data(train=True, size=8*BNN_REGRESSION_PARAMETERS.batch_size, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
@@ -182,7 +184,8 @@ def run_dnn_regression_training():
 
 def run_dnn_regression_evaluation(model_path: str):
     logger.info(f'Beginning regression evaluation against {model_path}...')
-
+    logger.info(DNN_REGRESSION_PARAMETERS)
+    
     net = RegressionDNN(params=DNN_REGRESSION_PARAMETERS, eval_mode=True).to(DEVICE)
     net.load_saved(model_path=model_path)
 
