@@ -12,7 +12,7 @@ from scipy import interpolate
 
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.config.parameters import Parameters, PriorParameters
-from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES, PLOTS_DIR
+from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES, PLOTS_DIR, INFO_DIR
 from bbb.models.dnn import RegressionDNN
 
 from bbb.utils.pytorch_setup import DEVICE
@@ -44,6 +44,7 @@ class MushroomBandit(ABC):
         self.n_weight_sampling = n_weight_sampling
         self.action_eaten = torch.Tensor([1,0]).to(DEVICE)
         self.action_noeat = torch.Tensor([0,1]).to(DEVICE)
+        self.pointer = 0
 
     def get_reward(self,eaten,poison):
         if eaten:
@@ -64,20 +65,18 @@ class MushroomBandit(ABC):
     def init_buffer(self, x: torch.Tensor, y: torch.Tensor):
         self.bufferX = torch.empty(4096, 97).to(DEVICE)
         self.bufferY = torch.empty(4096, 1).to(DEVICE)
-        # action_eaten = torch.Tensor([1,0]).to(DEVICE)
-        # action_noeat = torch.Tensor([0,1]).to(DEVICE)
-
+        self.bufferZ = torch.empty(4096, 1).to(DEVICE)
+        
         for i, idx in enumerate(np.random.choice(range(x.shape[0]), 4096)):
             eaten = 1 if np.random.rand() > 0.5 else 0
             action = self.action_eaten if eaten else self.action_noeat
             self.bufferX[i] = torch.cat((x[idx],action),-1)
             self.bufferY[i] = self.get_reward(eaten, y[idx])
+            self.bufferZ[i] = y[idx]
         
     # function to get which mushrooms will be eaten
     def eat_mushrooms(self, X: torch.Tensor, y: torch.Tensor, mushroom_idx: int):
         context, poison = X[mushroom_idx], y[mushroom_idx]
-        # action_eaten = torch.Tensor([1,0]).to(DEVICE)
-        # action_noeat = torch.Tensor([0,1]).to(DEVICE)
 
         try_eat = torch.cat((context,self.action_eaten),-1)
         try_reject = torch.cat((context,self.action_noeat),-1)
@@ -95,8 +94,17 @@ class MushroomBandit(ABC):
         action = self.action_eaten if eaten else self.action_noeat
 
         # Get rewards and add these to the buffer
-        self.bufferX = torch.vstack((self.bufferX, torch.cat((context,action),-1)))
-        self.bufferY = torch.vstack((self.bufferY, torch.Tensor((agent_reward,)).to(DEVICE)))
+        # self.bufferX = torch.vstack((self.bufferX, torch.cat((context,action),-1)))
+        # self.bufferY = torch.vstack((self.bufferY, torch.Tensor((agent_reward,)).to(DEVICE)))
+        # self.bufferZ = torch.vstack((self.bufferZ, torch.Tensor((poison,)).to(DEVICE)))
+
+        self.bufferX[self.pointer] = torch.cat((context,action),-1)
+        self.bufferY[self.pointer] = torch.Tensor((agent_reward,)).to(DEVICE)
+        self.bufferZ[self.pointer] = poison
+        if self.pointer >= 4096:
+            self.pointer = 0
+        else:
+            self.pointer += 1
 
         # Calculate regret
         regret = self.calculate_regret(agent_reward,poison)
@@ -129,7 +137,7 @@ DNN_RL_PARAMETERS = Parameters(
     output_dim = 1,
     hidden_layers = 3,
     hidden_units = 100,
-    batch_size = 100,
+    batch_size = 64,
     lr = lr,
     epochs = 1000,
     step_size=step_size,
@@ -220,12 +228,17 @@ def run_rl_training():
     plot_dir = os.path.join(PLOTS_DIR, 'rl')
     if not os.path.isdir(plot_dir):
         os.makedirs(plot_dir)
+    
+    # Create the training information of process, if it does not already exist
+    info_dir = os.path.join(INFO_DIR, 'rl')
+    if not os.path.isdir(info_dir):
+        os.makedirs(info_dir)
 
     # Define settings
     mnets = {
-        'Greedy':Greedy(epsilon=0),
-        'Greedy 1%':Greedy(epsilon=0.01),
-        'Greedy 5%':Greedy(epsilon=0.05),
+        # 'Greedy':Greedy(epsilon=0),
+        # 'Greedy 1%':Greedy(epsilon=0.01),
+        # 'Greedy 5%':Greedy(epsilon=0.05),
         'BBB':BBB_bandit()
     }
 
@@ -242,6 +255,11 @@ def run_rl_training():
             for name, net in mnets.items():
                 # Ensure the network is in training mode
                 net.net.train()
+                if not step%4096:
+                    result = torch.cat((net.bufferX, net.bufferY,net.bufferZ),1)
+                    torch.save(result, os.path.join(info_dir, name +'_' +str(step)+'_bandit_lr_'+str(lr) + '_step_' + str(step_size)+'_mushrooms.pt'))
+                    # torch.save(net.bufferY, os.path.join(net.net.model_save_dir, 'mushrooms.txt'))
+
 
                 avg_loss = net.update(X, y, mushroom_idx)
 
@@ -258,10 +276,12 @@ def run_rl_training():
                     ax.set_ylabel('Regret') 
                     ax.legend()
                     plt.yticks(range(3), ticks)
-                    plt.savefig(os.path.join(plot_dir, str(step)+'_bandit3_lr_'+str(lr) + '_step_' + str(step_size)+'.jpg'))
+                    plt.savefig(os.path.join(plot_dir, str(step)+'_bandit_lr_'+str(lr) + '_step_' + str(step_size)+'.jpg'))
 
                     # Save the latest model
                     torch.save(net.net.state_dict(), os.path.join(net.net.model_save_dir, 'model.pt'))
+                    result = torch.cat((net.bufferX, net.bufferY,net.bufferZ),1)
+                    torch.save(result, os.path.join(info_dir, name +'_' +str(step)+'_bandit_lr_'+str(lr) + '_step_' + str(step_size)+'_mushrooms.pt'))
 
     # Save the cumulative regret for each network
     for name, net in mnets.items():
@@ -282,7 +302,7 @@ def run_rl_training():
     # Save the plot
     plt.savefig(os.path.join(plot_dir, str(NB_STEPS)+'_bandit3_lr_'+str(lr) + '_step_' + str(step_size)+'.jpg'))
     # Show the plot
-    plt.show()
+    # plt.show()
 
 
 if __name__ == '__main__':
