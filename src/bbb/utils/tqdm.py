@@ -41,7 +41,7 @@ def train_with_tqdm(net: nn.Module, train_data: DataLoader, epochs: int, eval_da
             # If you want to check the parameter values, switch log level to debug
             logger.debug(net.optimizer.param_groups)
 
-            if eval_data is not None:
+            if eval_data is not None and not epoch % 20:
                 net.evaluate(eval_data)
 
                 # Write accuracy to tensorboard
@@ -50,7 +50,7 @@ def train_with_tqdm(net: nn.Module, train_data: DataLoader, epochs: int, eval_da
                 # Update tqdm progress bar
                 t_epoch.set_postfix_str(f'Loss: {loss:.5f}, {net.eval_metric}: {net.eval_score:.5f}')
             else:
-                t_epoch.set_postfix_str(f'Loss: {loss:.5f}')
+                t_epoch.set_postfix_str(f'Loss: {loss:.5f}, {net.eval_metric}: {net.eval_score:.5f}')
 
             if not hasattr(net, 'best_loss') or net.best_loss is None:
                 net.best_loss = loss
