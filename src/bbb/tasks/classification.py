@@ -99,12 +99,12 @@ DNN_CLASSIFY_PARAMETERS = Parameters(
     hidden_layers = 3,
     # Optimiser
     opt_choice = 'Adam',
-    lr = 0.005,
+    lr = 1e-4,
     # LR Scheduler
     step_size = 75,
-    gamma = 0.3,
+    gamma = 0.1,
     # Dropout
-    dropout = False,
+    dropout = True,
     dropout_p = 0.5,
 )
 
