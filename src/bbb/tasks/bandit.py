@@ -24,7 +24,6 @@ from bbb.models.bnn import BanditBNN
 from bbb.data import load_bandit
 
 logger = logging.getLogger(__name__)
-
 lr = 1e-4
 step_size = 500
 
@@ -43,6 +42,8 @@ class MushroomBandit(ABC):
         self.bufferY = None
         self.cum_regrets = [0]
         self.n_weight_sampling = n_weight_sampling
+        self.action_eaten = torch.Tensor([1,0]).to(DEVICE)
+        self.action_noeat = torch.Tensor([0,1]).to(DEVICE)
 
     def get_reward(self,eaten,poison):
         if eaten:
@@ -63,18 +64,23 @@ class MushroomBandit(ABC):
     def init_buffer(self, x: torch.Tensor, y: torch.Tensor):
         self.bufferX = torch.empty(4096, 97).to(DEVICE)
         self.bufferY = torch.empty(4096, 1).to(DEVICE)
+        # action_eaten = torch.Tensor([1,0]).to(DEVICE)
+        # action_noeat = torch.Tensor([0,1]).to(DEVICE)
 
         for i, idx in enumerate(np.random.choice(range(x.shape[0]), 4096)):
             eaten = 1 if np.random.rand() > 0.5 else 0
-            action = [1, 0] if eaten else [0, 1]
-            self.bufferX[i] = torch.cat((x[idx],torch.Tensor(action).to(DEVICE)),-1)
+            action = self.action_eaten if eaten else self.action_noeat
+            self.bufferX[i] = torch.cat((x[idx],action),-1)
             self.bufferY[i] = self.get_reward(eaten, y[idx])
         
     # function to get which mushrooms will be eaten
     def eat_mushrooms(self, X: torch.Tensor, y: torch.Tensor, mushroom_idx: int):
         context, poison = X[mushroom_idx], y[mushroom_idx]
-        try_eat = torch.cat((context,torch.Tensor([1,0]).to(DEVICE)),-1)
-        try_reject = torch.cat((context,torch.Tensor([0,1]).to(DEVICE)),-1)
+        # action_eaten = torch.Tensor([1,0]).to(DEVICE)
+        # action_noeat = torch.Tensor([0,1]).to(DEVICE)
+
+        try_eat = torch.cat((context,self.action_eaten),-1)
+        try_reject = torch.cat((context,self.action_noeat),-1)
 
         with torch.no_grad():
             r_eat = sum([self.net(try_eat) for _ in range(self.n_weight_sampling)]).item()
@@ -86,10 +92,10 @@ class MushroomBandit(ABC):
         agent_reward = self.get_reward(eaten, poison)
 
         # Get rewards and update buffer
-        action = np.array([1, 0] if eaten else [0, 1])
+        action = self.action_eaten if eaten else self.action_noeat
 
         # Get rewards and add these to the buffer
-        self.bufferX = torch.vstack((self.bufferX, torch.cat((context,torch.Tensor(action).to(DEVICE)),-1)))
+        self.bufferX = torch.vstack((self.bufferX, torch.cat((context,action),-1)))
         self.bufferY = torch.vstack((self.bufferY, torch.Tensor((agent_reward,)).to(DEVICE)))
 
         # Calculate regret
@@ -125,7 +131,7 @@ DNN_RL_PARAMETERS = Parameters(
     hidden_units = 100,
     batch_size = 100,
     lr = lr,
-    epochs = 100,
+    epochs = 1000,
     step_size=step_size,
     early_stopping=False,
     early_stopping_thresh=1e-4
@@ -151,6 +157,7 @@ class Greedy(MushroomBandit):
         self.net.optimizer.step()
         return loss
 
+
 BNN_RL_PARAMETERS = Parameters(
     name = "BBB_rl",
     input_dim = 97,
@@ -174,11 +181,11 @@ BNN_RL_PARAMETERS = Parameters(
     hidden_layers = 3,
     batch_size = 64,
     lr = lr,
-    epochs=100,
+    epochs=1000,
     step_size=step_size,
     elbo_samples = 2,
     inference_samples = 10,
-    prior_type=PRIOR_TYPES.single,
+    prior_type=PRIOR_TYPES.mixture,
     kl_reweighting_type=KL_REWEIGHTING_TYPES.paper,
     vp_variance_type=VP_VARIANCE_TYPES.paper
 )
@@ -251,7 +258,7 @@ def run_rl_training():
                     ax.set_ylabel('Regret') 
                     ax.legend()
                     plt.yticks(range(3), ticks)
-                    plt.savefig(os.path.join(plot_dir, str(step)+'_bandit_lr_'+str(lr) + '_step_' + str(step_size)+'.jpg'))
+                    plt.savefig(os.path.join(plot_dir, str(step)+'_bandit3_lr_'+str(lr) + '_step_' + str(step_size)+'.jpg'))
 
                     # Save the latest model
                     torch.save(net.net.state_dict(), os.path.join(net.net.model_save_dir, 'model.pt'))
@@ -273,7 +280,7 @@ def run_rl_training():
     plt.yticks(range(3), ticks)
     
     # Save the plot
-    plt.savefig(os.path.join(plot_dir, str(step)+'_bandit_lr_'+str(lr) + '_step_' + str(step_size)+'.jpg'))
+    plt.savefig(os.path.join(plot_dir, str(NB_STEPS)+'_bandit3_lr_'+str(lr) + '_step_' + str(step_size)+'.jpg'))
     # Show the plot
     plt.show()
 
