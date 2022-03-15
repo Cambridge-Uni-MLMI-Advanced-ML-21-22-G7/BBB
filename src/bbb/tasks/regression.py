@@ -53,8 +53,19 @@ def _bbb_regression_evaluation(net: nn.Module, X_train: DataLoader = None, X_val
 
 BNN_REGRESSION_PARAMETERS = Parameters(
     name = "BBB_regression",
+    batch_size = 128,
+    epochs = 1000,
+    # Architecture
     input_dim = 1,
     output_dim = 1,
+    hidden_units = 400,
+    hidden_layers = 3,
+    # Paper choices
+    prior_type = PRIOR_TYPES.single,
+    kl_reweighting_type = KL_REWEIGHTING_TYPES.paper,
+    vp_variance_type = VP_VARIANCE_TYPES.paper,
+    local_reparam_trick = False,
+    # Variational Inference
     weight_mu_range = [-0.2, 0.2],
     weight_rho_range = [-5, -4],
     prior_params = PriorParameters(
@@ -65,19 +76,14 @@ BNN_REGRESSION_PARAMETERS = Parameters(
         w_mixture_weight=0.5,
         b_mixture_weight=0.5,
     ),
-    regression_likelihood_noise = 0.1,
-    hidden_units = 400,
-    hidden_layers = 3,
-    batch_size = 128,
-    lr = 1e-3,
-    epochs = 1000,
-    step_size = 250,
     elbo_samples = 5,
     inference_samples = 10,
-    prior_type = PRIOR_TYPES.single,
-    kl_reweighting_type = KL_REWEIGHTING_TYPES.paper,
-    vp_variance_type = VP_VARIANCE_TYPES.paper,
-    local_reparam_trick = False
+    regression_likelihood_noise = 0.1,
+    # Optimiser
+    opt_choice = 'Adam',
+    lr = 1e-3,
+    # LR Scheduler
+    step_size = 250,
 )
 
 
@@ -139,18 +145,24 @@ def _dnn_regression_evaluation(net: nn.Module, X_train: DataLoader = None, X_val
 
 DNN_REGRESSION_PARAMETERS = Parameters(
     name = "DNN_regression",
+    batch_size = 128,
+    epochs = 1000,
+    # Architecture
     input_dim = 1,
     output_dim = 1,
     hidden_layers = 3,
     hidden_units = 400,
-    batch_size = 128,
+    # Optimiser
+    opt_choice = 'Adam',
     lr = 1e-3,
-    epochs = 1000,
+    # LR Scheduler
     step_size = 250,
+    # Early stopping
     early_stopping = False,
     early_stopping_thresh = 1e-4,
+    # Dropout
     dropout = False,
-    dropout_p = 0.5
+    dropout_p = 0.5,
 )
 
 def run_dnn_regression_training():

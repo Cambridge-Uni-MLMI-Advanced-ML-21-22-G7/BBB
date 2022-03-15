@@ -29,23 +29,28 @@ class BaseBNN(BaseModel, ABC):
     def __init__(self, params: Parameters, eval_mode: bool = False) -> None:
         super().__init__(params=params, eval_mode=eval_mode)
 
-        # Parameters
+        self.batch_size = params.batch_size
+        # Architecture
         self.input_dim = params.input_dim
         self.hidden_units = params.hidden_units
         self.hidden_layers = params.hidden_layers
         self.output_dim = params.output_dim
+        # Paper Choices
+        self.prior_type = params.prior_type
+        self.kl_reweighting_type = params.kl_reweighting_type
+        self.vp_variance_type = params.vp_variance_type
+        self.local_reparam_trick = params.local_reparam_trick
+        # VI
         self.weight_mu_range = params.weight_mu_range
         self.weight_rho_range = params.weight_rho_range
         self.prior_params = params.prior_params
         self.elbo_samples = params.elbo_samples
         self.inference_samples = params.inference_samples
-        self.batch_size = params.batch_size
+        # Optimiser
+        self.opt_choice = params.opt_choice
         self.lr = params.lr
+        # LR Scheduler
         self.step_size = params.step_size
-        self.prior_type = params.prior_type
-        self.kl_reweighting_type = params.kl_reweighting_type
-        self.vp_variance_type = params.vp_variance_type
-        self.local_reparam_trick = params.local_reparam_trick
         self.gamma = params.gamma
 
         # If using local reparameterisation trick the prior must be Gaussian
@@ -87,7 +92,7 @@ class BaseBNN(BaseModel, ABC):
         self.model = nn.Sequential(*model_layers)
 
         # Optimizer
-        self.optimizer = optim.Adam(
+        self.optimizer = getattr(optim, self.opt_choice)(
             self.parameters(),
             lr=self.lr
         )
