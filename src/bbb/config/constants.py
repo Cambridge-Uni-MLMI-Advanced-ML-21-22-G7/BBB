@@ -5,6 +5,7 @@ from dataclasses import dataclass
 MODEL_SAVE_DIR = './saved_models'
 TENSORBOARD_SAVE_DIR = './tensorboard'
 PLOTS_DIR = './plots'
+INFO_DIR = './RL_info'
 
 # Data locations
 MUSHROOM_DATASET_PATH = './data/mushroom.csv'
