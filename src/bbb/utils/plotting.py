@@ -7,6 +7,8 @@ import seaborn as sns
 from torch import Tensor
 import matplotlib.pyplot as plt
 
+# Set the font-size
+plt.rc('font', size=16)
 
 def plot_bbb_regression_predictions(
     X_train_arr: Tensor,
@@ -56,11 +58,11 @@ def plot_bbb_regression_predictions(
     # Add legend
     ax.legend()
 
+    # Save the figure
+    plt.savefig(os.path.join(save_dir, 'plot.png'), pad_inches=0.2, bbox_inches='tight')
+
     # Display the plot
     plt.show()
-
-    # Save the figure
-    plt.savefig(os.path.join(save_dir, 'plot.png'))
 
 
 def plot_dnn_regression_predictions(
@@ -96,11 +98,11 @@ def plot_dnn_regression_predictions(
     # Add legend
     ax.legend()
 
+    # Save the figure
+    plt.savefig(os.path.join(save_dir, 'plot.png'), pad_inches=0.2, bbox_inches='tight')
+
     # Display the plot
     plt.show()
-
-    # Save the figure
-    plt.savefig(os.path.join(save_dir, 'plot.png'))
 
 
 def plot_weight_samples(
@@ -137,11 +139,12 @@ def plot_weight_samples(
     # Add legend
     ax.legend()
 
+    # Save the figure
+    if save_dir:
+        plt.savefig(os.path.join(save_dir, 'weights_plot.png'), pad_inches=0.2, bbox_inches='tight')
+
     # Display the plot
     plt.show()
-
-    # Save the figure
-    if save_dir: plt.savefig(os.path.join(save_dir, 'weights_plot.png'))
 
     ################
     # Combined plots
@@ -156,8 +159,9 @@ def plot_weight_samples(
     ax.set_xlabel('Weight Value')
     ax.set_ylabel('Density')
 
+    # Save the figure
+    if save_dir:
+        plt.savefig(os.path.join(save_dir, 'comb_weights_plot.png'), pad_inches=0.2, bbox_inches='tight')
+
     # Display the plot
     plt.show()
-
-    # Save the figure
-    if save_dir: plt.savefig(os.path.join(save_dir, 'comb_weights_plot.png'))

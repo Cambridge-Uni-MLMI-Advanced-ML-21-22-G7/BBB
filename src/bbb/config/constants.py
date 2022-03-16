@@ -10,6 +10,9 @@ INFO_DIR = './RL_info'
 # Data locations
 MUSHROOM_DATASET_PATH = './data/mushroom.csv'
 
+MUSHROOM_BUFFER_PATH = './data/buffer.pt'
+MUSHROOM_TRAIN_PATH = './data/training.pt'
+
 @dataclass
 class _KlReweightingTypes:
     """Relates to section 3.4 of the paper:

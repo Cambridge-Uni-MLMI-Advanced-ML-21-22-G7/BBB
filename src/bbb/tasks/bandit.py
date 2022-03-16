@@ -9,6 +9,7 @@ import torch
 import torch.optim as optim
 from torch.autograd import Variable
 from scipy import interpolate
+import pandas as pd
 
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.config.parameters import Parameters, PriorParameters
@@ -21,12 +22,14 @@ from bbb.config.parameters import Parameters, PriorParameters
 #     KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES, PLOTS_DIR
 # )
 from bbb.models.bnn import BanditBNN
-from bbb.data import load_bandit
+from bbb.data import load_bandit,load_bandit_buffer,load_bandit_train
 
 logger = logging.getLogger(__name__)
 lr = 1e-4
-step_size = 500
+step_size = 1001
 gamma = 0.5
+idx_list = []
+
 Var = lambda x, dtype=torch.FloatTensor: Variable(
     torch.from_numpy(x).type(dtype)).to(DEVICE)
 
@@ -238,13 +241,13 @@ def run_rl_training():
 
     # Define settings
     mnets = {
-        # 'Greedy':Greedy(epsilon=0),
-        # 'Greedy 1%':Greedy(epsilon=0.01),
-        # 'Greedy 5%':Greedy(epsilon=0.05),
-        'BBB':BBB_bandit()
+        'Greedy':Greedy(epsilon=0),
+        'Greedy 1%':Greedy(epsilon=0.01),
+        'Greedy 5%':Greedy(epsilon=0.05),
+        # 'BBB':BBB_bandit()
     }
 
-    NB_STEPS = 10
+    NB_STEPS = 50000
 
     # Initialise buffers
     for name, net in mnets.items():
@@ -254,12 +257,15 @@ def run_rl_training():
     with tqdm(range(NB_STEPS), unit="batch") as t_epoch:
         for step in t_epoch:
             mushroom_idx = np.random.randint(X.shape[0])
+            idx_list.append(mushroom_idx)
             for name, net in mnets.items():
                 # Ensure the network is in training mode
                 net.net.train()
+
                 if not step%4096:
                     result = torch.cat((net.bufferX, net.bufferY,net.bufferZ),1)
                     filename = name + '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,step) + '.pt'
+                    print(filename)
                     torch.save(result, os.path.join(info_dir, filename))
 
                 avg_loss = net.update(X, y, mushroom_idx)
@@ -277,7 +283,8 @@ def run_rl_training():
                     ax.set_ylabel('Regret') 
                     ax.legend()
                     plt.yticks(range(4), ticks)
-                    filename = name + '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,step) + '.jpg'
+                    filename = name +'GPU' + '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,step) + '.jpg'
+                    print(filename)
                     plt.savefig(os.path.join(plot_dir, filename))
 
                     # Save the latest model
@@ -288,7 +295,7 @@ def run_rl_training():
     for name, net in mnets.items():
         np.save(os.path.join(net.net.model_save_dir, 'cum_regrets.npy'), np.array(net.cum_regrets))
         result = torch.cat((net.bufferX, net.bufferY,net.bufferZ),1)
-        filename = name + '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final') + '.pt'
+        filename = name +'GPU'+ '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final') + '.pt'
         torch.save(result, os.path.join(info_dir, filename))
 
     # Plotting
@@ -304,8 +311,12 @@ def run_rl_training():
     plt.yticks(range(4), ticks)
     
     # Save the plot
-    filename = name + '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final') + '.jpg'
+    filename = name +'GPU'+  '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final') + '.jpg'
     plt.savefig(os.path.join(plot_dir, filename))
+
+    df = pd.DataFrame(columns=['idx'],data=idx_list)
+    filename = name +'GPU'+  '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final')
+    df.to_csv(filename+".csv", encoding='utf-8', index=False)
     # Show the plot
     # plt.show()
 
