@@ -9,7 +9,7 @@ from torch.utils.data.dataset import T_co
 from torchvision import datasets, transforms
 import pandas as pd
 
-from bbb.config.constants import MUSHROOM_DATASET_PATH
+from bbb.config.constants import MUSHROOM_DATASET_PATH, MUSHROOM_BUFFER_PATH, MUSHROOM_TRAIN_PATH
 from bbb.utils.pytorch_setup import DEVICE
 
 
@@ -50,6 +50,21 @@ def load_bandit() -> Tuple[torch.Tensor, torch.Tensor]:
     X = df_to_tensor(X.copy())
     y = df_to_tensor(y.copy()).unsqueeze(-1)
 
+    return X,y
+
+def load_bandit_buffer() -> Tuple[torch.Tensor, torch.Tensor]:
+    data = torch.load(MUSHROOM_BUFFER_PATH).to(DEVICE)
+    X = data[:,:97]
+    y = data[:,97].unsqueeze(-1)
+    z = data[:,98].unsqueeze(-1)
+    # x is context + action, y is reward, z is label
+    return X,y,z
+
+def load_bandit_train() -> Tuple[torch.Tensor, torch.Tensor]:
+    data = torch.load(MUSHROOM_TRAIN_PATH).to(DEVICE)
+    X = data[:,:95]
+    y = data[:,95].unsqueeze(-1)
+    # x is contecxt, y is label
     return X,y
 
 class RegressionDataset(Dataset):
