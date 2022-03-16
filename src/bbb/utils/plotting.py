@@ -1,8 +1,9 @@
 import os
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import torch
+import seaborn as sns
 from torch import Tensor
 import matplotlib.pyplot as plt
 
@@ -104,9 +105,10 @@ def plot_dnn_regression_predictions(
 
 def plot_weight_samples(
     weight_samples: List[Tensor],
-    save_dir: str
+    save_dir: Union[str, None]=None,
+    bins: int=50
 ):
-    """Plot a historgram of the passed weights.
+    """Plot a histogram of the passed weights.
 
     :param weight_samples: List of sampled weights
     :type weight_samples: List[Tensor]
@@ -125,7 +127,8 @@ def plot_weight_samples(
 
     fig, ax = plt.subplots(1, 1, figsize=(10,10))
     for i, weights in enumerate(weight_samples):
-            ax.hist(weights.detach().cpu().numpy(), label=f'Layer: {i}, Weights: {weights.shape[0]}', **histogram_args)
+            sns.kdeplot(weights.detach().cpu().numpy(), label=f'Layer: {i}, Weights: {weights.shape[0]}', fill=True, clip=[-0.3, 0.3])
+            # ax.hist(weights.detach().cpu().numpy(), label=f'Layer: {i}, Weights: {weights.shape[0]}', **histogram_args)
     
     # Formatting of plot
     ax.set_xlabel('Weight Value')
@@ -138,7 +141,7 @@ def plot_weight_samples(
     plt.show()
 
     # Save the figure
-    plt.savefig(os.path.join(save_dir, 'weights_plot.png'))
+    if save_dir: plt.savefig(os.path.join(save_dir, 'weights_plot.png'))
 
     ################
     # Combined plots
@@ -146,7 +149,8 @@ def plot_weight_samples(
 
     fig, ax = plt.subplots(1, 1, figsize=(10,10))
     comb_weight_samples = torch.hstack(weight_samples)
-    ax.hist(comb_weight_samples.flatten().detach().cpu().numpy(), **histogram_args)
+    sns.kdeplot(comb_weight_samples.flatten().detach().cpu().numpy(), fill=True, clip=[-0.3, 0.3])
+    # ax.hist(comb_weight_samples.flatten().detach().cpu().numpy(), **histogram_args)
 
     # Formatting of plot
     ax.set_xlabel('Weight Value')
@@ -156,4 +160,4 @@ def plot_weight_samples(
     plt.show()
 
     # Save the figure
-    plt.savefig(os.path.join(save_dir, 'comb_weights_plot.png'))
+    if save_dir: plt.savefig(os.path.join(save_dir, 'comb_weights_plot.png'))

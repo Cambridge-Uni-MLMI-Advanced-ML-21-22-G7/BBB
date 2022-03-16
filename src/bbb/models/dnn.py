@@ -120,7 +120,7 @@ class BaseDNN(BaseModel, ABC):
         return loss
 
     def weight_samples(self) -> List[Tensor]:
-        """Sample the BFC layer weights.
+        """Get the DNN layer weights.
 
         :return: weight samples
         :rtype: List[Tensor]
@@ -199,3 +199,9 @@ class ClassificationDNN(ClassificationEval, BaseDNN):
         preds = torch.argmax(probs, dim=1)
         
         return preds, probs
+
+    def enable_dropout(self):
+        """ Enable the dropout layers """
+        for layer in self.model:
+            if isinstance(layer, nn.Dropout):
+                layer.train()
