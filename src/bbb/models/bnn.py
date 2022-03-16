@@ -359,20 +359,20 @@ class BaseBNN(BaseModel, ABC):
         # weight_tensors = []
         # for layer in [l for l in self.model if isinstance(l, BFC)]:
 
-        #     ################
-        #     # Sampling from N(mu, sigma)
-        #     ################
-        #     mu = layer.w_var_post.mu 
-        #     rho = layer.w_var_post.rho 
-        #     sigma = torch.log1p(torch.exp(rho))
+            ################
+            # Sampling from N(mu, sigma)
+            ################
+            # mu = layer.w_var_post.mu 
+            # rho = layer.w_var_post.rho 
+            # sigma = torch.log1p(torch.exp(rho))
     
-        #     draws = torch.normal(mu, sigma)
-        #     weight_tensors.append(draws.flatten())
+            # draws = torch.normal(mu, sigma)
+            # weight_tensors.append(draws.flatten())
 
-        #     ###############
-        #     # Return mu directly
-        #     ###############
-        #     weight_tensors.append(layer.w_var_post.mu.flatten())
+            ###############
+            # Return mu directly
+            ###############
+            # weight_tensors.append(layer.w_var_post.mu.flatten())
 
         return weight_tensors
 
