@@ -8,11 +8,11 @@ from bbb.utils.pytorch_setup import DEVICE
 from bbb.utils.plotting import plot_bbb_regression_predictions
 from bbb.config.parameters import Parameters, PriorParameters
 from bbb.models.dnn import RegressionDNN
-from bbb.data import generate_regression_data
+from bbb.data import generate_modified_regression_data
 
 
-MODEL_PATHS = glob('saved_models/DNN_regression/basline/*/model.pt')
-SAVE_DIR = os.path.join('plots', 'baseline', 'dnn_regression')
+MODEL_PATHS = glob('saved_models/DNN_regression/modified_data/*/model.pt')
+SAVE_DIR = os.path.join('plots', 'modified_data', 'dnn_regression')
 
 
 def main():
@@ -32,8 +32,8 @@ def main():
         dropout_p = 0.5
     )
 
-    X_train = generate_regression_data(train=True, size=8*DNN_REGRESSION_PARAMETERS.batch_size, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
-    X_val = generate_regression_data(train=False, size=DNN_REGRESSION_PARAMETERS.batch_size, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
+    X_train = generate_modified_regression_data(train=True, size=8*DNN_REGRESSION_PARAMETERS.batch_size, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
+    X_val = generate_modified_regression_data(train=False, size=DNN_REGRESSION_PARAMETERS.batch_size, batch_size=DNN_REGRESSION_PARAMETERS.batch_size, shuffle=True)
 
     X_train_arr = np.array(X_train.dataset, dtype=float)
     X_val_arr = np.array(X_val.dataset, dtype=float)
