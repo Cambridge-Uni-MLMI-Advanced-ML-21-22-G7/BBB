@@ -83,7 +83,8 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     opt_choice = 'Adam',
     lr = 1e-3,
     # LR Scheduler
-    step_size = 250,
+    step_size = 5000,
+    gamma=0.5
 )
 
 
@@ -156,7 +157,8 @@ DNN_REGRESSION_PARAMETERS = Parameters(
     opt_choice = 'Adam',
     lr = 1e-3,
     # LR Scheduler
-    step_size = 250,
+    step_size = 500,
+    gamma=0.5,
     # Early stopping
     early_stopping = False,
     early_stopping_thresh = 1e-4,
