@@ -22,7 +22,7 @@ from bbb.config.parameters import Parameters, PriorParameters
 #     KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES, PLOTS_DIR
 # )
 from bbb.models.bnn import BanditBNN
-from bbb.data import load_bandit
+from bbb.data import load_bandit,load_bandit_buffer,load_bandit_train
 
 logger = logging.getLogger(__name__)
 lr = 1e-4
@@ -241,10 +241,10 @@ def run_rl_training():
 
     # Define settings
     mnets = {
-        # 'Greedy':Greedy(epsilon=0),
-        # 'Greedy 1%':Greedy(epsilon=0.01),
-        # 'Greedy 5%':Greedy(epsilon=0.05),
-        'BBB':BBB_bandit()
+        'Greedy':Greedy(epsilon=0),
+        'Greedy 1%':Greedy(epsilon=0.01),
+        'Greedy 5%':Greedy(epsilon=0.05),
+        # 'BBB':BBB_bandit()
     }
 
     NB_STEPS = 50000
