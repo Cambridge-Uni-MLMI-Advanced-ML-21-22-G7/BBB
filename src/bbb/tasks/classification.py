@@ -104,7 +104,7 @@ DNN_CLASSIFY_PARAMETERS = Parameters(
     step_size = 75,
     gamma = 0.1,
     # Dropout
-    dropout = True,
+    dropout = False,
     dropout_p = 0.5,
 )
 
@@ -133,8 +133,7 @@ def run_dnn_mnist_classification_training():
 
 def run_dnn_mnist_classification_evaluation(model_path: str):
     logger.info(f'Beginning classification evaluation against {model_path}...')
-    logger.info(DNN_CLASSIFY_PARAMETERS)
-
+    
     net = ClassificationDNN(params=DNN_CLASSIFY_PARAMETERS, eval_mode=True).to(DEVICE)
     net.load_saved(model_path=model_path)
 
