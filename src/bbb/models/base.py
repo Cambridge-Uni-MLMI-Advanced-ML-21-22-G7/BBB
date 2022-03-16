@@ -2,9 +2,11 @@ import os
 import json
 from datetime import datetime
 
+
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
+from bbb.utils.pytorch_setup import DEVICE
 from bbb.config.parameters import Parameters
 
 class BaseModel(torch.nn.Module):
@@ -69,7 +71,7 @@ class BaseModel(torch.nn.Module):
         self.save_model_path = model_path
 
         if os.path.isfile(self.save_model_path):
-            self.model.load_state_dict(torch.load(self.save_model_path))
+            self.model.load_state_dict(torch.load(self.save_model_path, map_location=torch.device(DEVICE)))
         else:
             raise FileNotFoundError(
                 f'No model saved at: {self.save_model_path}'
