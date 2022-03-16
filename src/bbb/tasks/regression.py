@@ -184,7 +184,6 @@ def run_dnn_regression_training():
 
 def run_dnn_regression_evaluation(model_path: str):
     logger.info(f'Beginning regression evaluation against {model_path}...')
-    logger.info(DNN_REGRESSION_PARAMETERS)
     
     net = RegressionDNN(params=DNN_REGRESSION_PARAMETERS, eval_mode=True).to(DEVICE)
     net.load_saved(model_path=model_path)
