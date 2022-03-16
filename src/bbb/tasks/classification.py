@@ -52,6 +52,8 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
 
 def run_bbb_mnist_classification_training():
     logger.info('Beginning classification training...')
+    logger.info(BBB_CLASSIFY_PARAMETERS)
+
     net = ClassificationBNN(params=BBB_CLASSIFY_PARAMETERS).to(DEVICE)
 
     logger.info('Initialized BNN...')
@@ -73,6 +75,7 @@ def run_bbb_mnist_classification_training():
 
 def run_bbb_mnist_classification_evaluation(model_path: str):
     logger.info(f'Beginning classification evaluation against {model_path}...')
+    logger.info(BBB_CLASSIFY_PARAMETERS)
     
     net = ClassificationBNN(params=BBB_CLASSIFY_PARAMETERS, eval_mode=True).to(DEVICE)
     net.load_saved(model_path=model_path)
@@ -96,10 +99,10 @@ DNN_CLASSIFY_PARAMETERS = Parameters(
     hidden_layers = 3,
     # Optimiser
     opt_choice = 'Adam',
-    lr = 0.005,
+    lr = 1e-4,
     # LR Scheduler
     step_size = 75,
-    gamma = 0.3,
+    gamma = 0.1,
     # Dropout
     dropout = False,
     dropout_p = 0.5,
@@ -107,6 +110,8 @@ DNN_CLASSIFY_PARAMETERS = Parameters(
 
 def run_dnn_mnist_classification_training():
     logger.info('Beginning classification training...')
+    logger.info(DNN_CLASSIFY_PARAMETERS)
+
     net = ClassificationDNN(params=DNN_CLASSIFY_PARAMETERS).to(DEVICE)
 
     logger.info('Initialized DNN...')

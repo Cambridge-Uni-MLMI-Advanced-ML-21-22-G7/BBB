@@ -329,12 +329,18 @@ class BaseBNN(BaseModel, ABC):
         ##################################
         # Initialise list of tensors to hold weight samples
         # Each tensor will hold samples of weights from a single layer
+    
+        # Input layers
         weight_tensors = [
             torch.zeros(size=(self.input_dim*self.hidden_units, self.inference_samples)).to(DEVICE)]
+
+        # Hidden layers
         weight_tensors.extend([
             torch.zeros(size=(self.hidden_units**2, self.inference_samples)).to(DEVICE)
             for _ in range(self.hidden_layers-2)
         ])
+
+        # Output layer
         weight_tensors.append(torch.zeros(size=(self.hidden_units*self.output_dim, self.inference_samples)).to(DEVICE))
 
         # Repeat sampling <inference_samples> times
@@ -342,14 +348,30 @@ class BaseBNN(BaseModel, ABC):
             for j in range(self.inference_samples):
                 weight_tensors[i][:, j] = layer.w_var_post.sample().flatten()
             
-             # Take the mean across the samples
-            weight_tensors[i] = weight_tensors[i].mean(axis=-1)
+            # Take the mean across the samples
+            # weight_tensors[i] = weight_tensors[i].mean(axis=-1)
+            weight_tensors[i] = weight_tensors[i].flatten()
+
 
         ####################
         # Using mean weights
         ####################
         # weight_tensors = []
         # for layer in [l for l in self.model if isinstance(l, BFC)]:
+
+        #     ################
+        #     # Sampling from N(mu, sigma)
+        #     ################
+        #     mu = layer.w_var_post.mu 
+        #     rho = layer.w_var_post.rho 
+        #     sigma = torch.log1p(torch.exp(rho))
+    
+        #     draws = torch.normal(mu, sigma)
+        #     weight_tensors.append(draws.flatten())
+
+        #     ###############
+        #     # Return mu directly
+        #     ###############
         #     weight_tensors.append(layer.w_var_post.mu.flatten())
 
         return weight_tensors
