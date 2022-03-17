@@ -11,8 +11,9 @@ from bbb.models.dnn import RegressionDNN
 from bbb.data import generate_regression_data
 
 
-MODEL_PATHS = glob('saved_models/DNN_regression/basline/*/model.pt')
-SAVE_DIR = os.path.join('plots', 'baseline', 'dnn_regression')
+
+MODEL_PATHS = glob('saved_models/DNN_regression/baseline/*/model.pt')
+SAVE_DIR = os.path.join('plots', 'dnn_regression', 'baseline')
 
 
 def main():

@@ -12,7 +12,7 @@ from bbb.data import generate_modified_regression_data
 
 
 MODEL_PATHS = glob('saved_models/DNN_regression/modified_data/*/model.pt')
-SAVE_DIR = os.path.join('plots', 'modified_data', 'dnn_regression')
+SAVE_DIR = os.path.join('plots', 'dnn_regression', 'modified_data')
 
 
 def main():
