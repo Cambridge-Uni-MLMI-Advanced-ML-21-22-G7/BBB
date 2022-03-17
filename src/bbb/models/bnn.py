@@ -316,7 +316,6 @@ class BaseBNN(BaseModel, ABC):
 
             batch_elbo.backward()
             self.optimizer.step()
-            pass
 
         # Record the ELBO
         self.loss_hist.append(batch_elbo.item())
