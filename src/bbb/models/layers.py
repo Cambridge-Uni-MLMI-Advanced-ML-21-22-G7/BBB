@@ -249,8 +249,7 @@ class BFC_LRT(BaseBFC):
         :return: _description_
         :rtype: Tensor
         """
-        return 0.5 * (2 * torch.log(sigma_p / sigma_q) - 1 + (sigma_q / sigma_p).pow(2) + ((mu_p - mu_q) / sigma_p).pow(2)).sum()
-        # return (torch.log((sigma_p/sigma_q)) + ((sigma_q.pow(2) + (mu_q-mu_p).pow(2))/(2*sigma_p.pow(2))) - 0.5).sum()
+        return (torch.log((sigma_p/sigma_q)) + ((sigma_q.pow(2) + (mu_q-mu_p).pow(2))/(2*sigma_p.pow(2))) - 0.5).sum()
 
     def _kl_d(self) -> float:
         """Determine and add the KL divergence for weights and biases.
