@@ -9,11 +9,14 @@ from torch import nn, optim, Tensor
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES
 from bbb.config.parameters import Parameters
 from bbb.models.base import BaseModel
-from bbb.models.layers import BFC, BFC_LRT
+from bbb.models.layers import BFC, BFC_LRT, BaseBFC
 from bbb.models.evaluation import RegressionEval, ClassificationEval
 
 
@@ -69,22 +72,28 @@ class BaseBNN(BaseModel, ABC):
             "vp_var_type": self.vp_variance_type
         }
 
+        # Define layer type
+        if self.local_reparam_trick:
+            BFC_CLASS = BFC_LRT
+        else:
+            BFC_CLASS = BFC
+
         # Model
         model_layers = []
-        model_layers.append(BFC(
+        model_layers.append(BFC_CLASS(
             dim_in=self.input_dim,
             dim_out=self.hidden_units,
             **bfc_arguments)
         )
         model_layers.append(nn.ReLU())
         for _ in range(self.hidden_layers-2):
-            model_layers.append(BFC(
+            model_layers.append(BFC_CLASS(
                 dim_in=self.hidden_units,
                 dim_out=self.hidden_units,
                 **bfc_arguments
             ))
             model_layers.append(nn.ReLU())
-        model_layers.append(BFC(
+        model_layers.append(BFC_CLASS(
             dim_in=self.hidden_units,
             dim_out=self.output_dim,
             **bfc_arguments)
@@ -124,7 +133,7 @@ class BaseBNN(BaseModel, ABC):
         :rtype: Tensor
         """
         for layer in self.model:
-            if isinstance(layer, BFC):
+            if isinstance(layer, BaseBFC):
                 X = layer.forward(X, sample=False)
             else:
                 X = layer.forward(X)
@@ -138,7 +147,7 @@ class BaseBNN(BaseModel, ABC):
         """
         log_prior = 0
         for layer in self.model:
-            if isinstance(layer, BFC):
+            if isinstance(layer, BaseBFC):
                 log_prior += layer.log_prior
 
         return log_prior
@@ -151,7 +160,7 @@ class BaseBNN(BaseModel, ABC):
         """
         log_posterior = 0
         for layer in self.model:
-            if isinstance(layer, BFC):
+            if isinstance(layer, BaseBFC):
                 log_posterior += layer.log_var_post
 
         return log_posterior
@@ -168,6 +177,8 @@ class BaseBNN(BaseModel, ABC):
 
         kl_d = 0
         for layer in self.model:
+            # DO NOT CHANGE CHECK FROM BFC_LRT - KL divergence only applies
+            # when using the local reparameterisation trick
             if isinstance(layer, BFC_LRT):
                 kl_d += layer.kl_d
 
@@ -268,6 +279,35 @@ class BaseBNN(BaseModel, ABC):
 
         return elbo
 
+    def plot_grad_flow_v2(self, named_parameters):
+        '''Plots the gradients flowing through different layers in the net during training.
+        Can be used for checking for possible gradient vanishing / exploding problems.
+        
+        Usage: Plug this function in Trainer class after loss.backwards() as 
+        "plot_grad_flow(self.model.named_parameters())" to visualize the gradient flow'''
+        ave_grads = []
+        max_grads= []
+        layers = []
+        for n, p in named_parameters:
+            if(p.requires_grad) and ("bias" not in n):
+                layers.append(n)
+                ave_grads.append(p.grad.abs().mean().item())
+                max_grads.append(p.grad.abs().max().item())
+        plt.bar(np.arange(len(max_grads)), max_grads, alpha=0.1, lw=1, color="c")
+        plt.bar(np.arange(len(max_grads)), ave_grads, alpha=0.1, lw=1, color="b")
+        plt.hlines(0, 0, len(ave_grads)+1, lw=2, color="k" )
+        plt.xticks(range(0,len(ave_grads), 1), layers, rotation="vertical")
+        plt.xlim(left=0, right=len(ave_grads))
+        plt.ylim(bottom = -0.001, top=0.02) # zoom in on the lower gradient regions
+        plt.xlabel("Layers")
+        plt.ylabel("average gradient")
+        plt.title("Gradient flow")
+        plt.grid(True)
+        plt.legend([Line2D([0], [0], color="c", lw=4),
+                    Line2D([0], [0], color="b", lw=4),
+                    Line2D([0], [0], color="k", lw=4)], ['max-gradient', 'mean-gradient', 'zero-gradient'])
+        plt.show()
+
     def train_step(self, train_data: DataLoader) -> float:
         """Single epoch of training.
 
@@ -296,7 +336,7 @@ class BaseBNN(BaseModel, ABC):
             else:
                 raise RuntimeError(f'Unrecognised KL re-weighting type: {self.kl_reweighting_type}')
 
-            self.zero_grad()
+            self.optimizer.zero_grad()
 
             # Call the appropriate method for determining the sample ELBO
             if self.local_reparam_trick:
@@ -307,7 +347,9 @@ class BaseBNN(BaseModel, ABC):
                 ) = self.sample_ELBO(X, Y, pi, self.elbo_samples)
 
             batch_elbo.backward()
+            self.plot_grad_flow_v2(self.model.named_parameters())
             self.optimizer.step()
+            pass
 
         # Record the ELBO
         self.loss_hist.append(batch_elbo.item())
@@ -344,7 +386,7 @@ class BaseBNN(BaseModel, ABC):
         weight_tensors.append(torch.zeros(size=(self.hidden_units*self.output_dim, self.inference_samples)).to(DEVICE))
 
         # Repeat sampling <inference_samples> times
-        for i, layer in enumerate([l for l in self.model if isinstance(l, BFC)]):
+        for i, layer in enumerate([l for l in self.model if isinstance(l, BaseBFC)]):
             for j in range(self.inference_samples):
                 weight_tensors[i][:, j] = layer.w_var_post.sample().flatten()
             
@@ -357,7 +399,7 @@ class BaseBNN(BaseModel, ABC):
         # Using mean weights
         ####################
         # weight_tensors = []
-        # for layer in [l for l in self.model if isinstance(l, BFC)]:
+        # for layer in [l for l in self.model if isinstance(l, BaseBFC)]:
 
         #     ################
         #     # Sampling from N(mu, sigma)

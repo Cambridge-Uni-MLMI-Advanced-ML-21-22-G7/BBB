@@ -178,7 +178,7 @@ class BFC(BaseBFC):
         # return torch.mm(input, w) + b # (IF you specify weights above as Tensor(dim_out, dim_in))
         return nn.functional.linear(input, w, b)
 
-class BFC_LRT(nn.Module):
+class BFC_LRT(BaseBFC):
     """Bayesian (Weights) Fully Connected Layer using the local reparameterisation trick"""
     
     def __init__(
@@ -213,16 +213,19 @@ class BFC_LRT(nn.Module):
         """
         
         if self.training or sample:
-            gamma = nn.functional.linear(input, self.w_var_post.mu)
-            delta = torch.sqrt(torch.functional.linear(input.pow(2), self.w_var_post.sigma.pow(2)))
+            gamma = torch.mm(input, self.w_var_post.mu.T)
+            delta = torch.sqrt(torch.mm(input.pow(2), self.w_var_post.sigma.T.pow(2)))
 
-            w_zeta = distributions.Normal(0,1).sample(gamma.size())
-            b_zeta = distributions.Normal(0,1).sample(self.b_var_post.mu.size())
+            w_zeta = distributions.Normal(0,1).sample(gamma.size()).to(DEVICE)
+            b_zeta = distributions.Normal(0,1).sample(self.b_var_post.mu.size()).to(DEVICE)
 
             w_act_sample = gamma + delta * w_zeta
             b_act_sample = self.b_var_post.mu + self.b_var_post.sigma * b_zeta
 
-            return w_act_sample + b_act_sample
+            self.kl_d = self._kl_d()
+
+            activation = w_act_sample + b_act_sample
+            return activation
         else:
             raise NotImplementedError(
                 "Not yet implemented."
@@ -246,9 +249,10 @@ class BFC_LRT(nn.Module):
         :return: _description_
         :rtype: Tensor
         """
-        return (torch.log((sigma_p/sigma_q)) + ((sigma_q.pow(2) + (mu_q-mu_p).pow(2))/(2*sigma_p.pow(2))) - 0.5).sum()
+        return 0.5 * (2 * torch.log(sigma_p / sigma_q) - 1 + (sigma_q / sigma_p).pow(2) + ((mu_p - mu_q) / sigma_p).pow(2)).sum()
+        # return (torch.log((sigma_p/sigma_q)) + ((sigma_q.pow(2) + (mu_q-mu_p).pow(2))/(2*sigma_p.pow(2))) - 0.5).sum()
 
-    def kl_d(self) -> float:
+    def _kl_d(self) -> float:
         """Determine and add the KL divergence for weights and biases.
 
         :return: KL divergence
