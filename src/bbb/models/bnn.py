@@ -350,6 +350,8 @@ class BaseBNN(BaseModel, ABC):
             
             # Take the mean across the samples
             # weight_tensors[i] = weight_tensors[i].mean(axis=-1)
+
+            # Take all samples
             weight_tensors[i] = weight_tensors[i].flatten()
 
 
