@@ -214,7 +214,7 @@ class BFC_LRT(BaseBFC):
         
         if self.training or sample:
             gamma = torch.mm(input, self.w_var_post.mu.T)
-            delta = torch.sqrt(torch.mm(input.pow(2), self.w_var_post.sigma.T.pow(2)))
+            delta = torch.sqrt(1e-20 + torch.mm(input.pow(2), self.w_var_post.sigma.T.pow(2)))
 
             w_zeta = distributions.Normal(0,1).sample(gamma.size()).to(DEVICE)
             b_zeta = distributions.Normal(0,1).sample(self.b_var_post.mu.size()).to(DEVICE)
