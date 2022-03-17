@@ -13,7 +13,7 @@ from bbb.utils.pytorch_setup import DEVICE
 from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES
 from bbb.config.parameters import Parameters
 from bbb.models.base import BaseModel
-from bbb.models.layers import BFC, BFC_LRT
+from bbb.models.layers import BFC, BFC_LRT, BaseBFC
 from bbb.models.evaluation import RegressionEval, ClassificationEval
 
 
@@ -69,22 +69,28 @@ class BaseBNN(BaseModel, ABC):
             "vp_var_type": self.vp_variance_type
         }
 
+        # Define layer type
+        if self.local_reparam_trick:
+            BFC_CLASS = BFC_LRT
+        else:
+            BFC_CLASS = BFC
+
         # Model
         model_layers = []
-        model_layers.append(BFC(
+        model_layers.append(BFC_CLASS(
             dim_in=self.input_dim,
             dim_out=self.hidden_units,
             **bfc_arguments)
         )
         model_layers.append(nn.ReLU())
         for _ in range(self.hidden_layers-2):
-            model_layers.append(BFC(
+            model_layers.append(BFC_CLASS(
                 dim_in=self.hidden_units,
                 dim_out=self.hidden_units,
                 **bfc_arguments
             ))
             model_layers.append(nn.ReLU())
-        model_layers.append(BFC(
+        model_layers.append(BFC_CLASS(
             dim_in=self.hidden_units,
             dim_out=self.output_dim,
             **bfc_arguments)
@@ -124,7 +130,7 @@ class BaseBNN(BaseModel, ABC):
         :rtype: Tensor
         """
         for layer in self.model:
-            if isinstance(layer, BFC):
+            if isinstance(layer, BaseBFC):
                 X = layer.forward(X, sample=False)
             else:
                 X = layer.forward(X)
@@ -138,7 +144,7 @@ class BaseBNN(BaseModel, ABC):
         """
         log_prior = 0
         for layer in self.model:
-            if isinstance(layer, BFC):
+            if isinstance(layer, BaseBFC):
                 log_prior += layer.log_prior
 
         return log_prior
@@ -151,7 +157,7 @@ class BaseBNN(BaseModel, ABC):
         """
         log_posterior = 0
         for layer in self.model:
-            if isinstance(layer, BFC):
+            if isinstance(layer, BaseBFC):
                 log_posterior += layer.log_var_post
 
         return log_posterior
@@ -168,6 +174,8 @@ class BaseBNN(BaseModel, ABC):
 
         kl_d = 0
         for layer in self.model:
+            # DO NOT CHANGE CHECK FROM BFC_LRT - KL divergence only applies
+            # when using the local reparameterisation trick
             if isinstance(layer, BFC_LRT):
                 kl_d += layer.kl_d
 
@@ -344,7 +352,7 @@ class BaseBNN(BaseModel, ABC):
         weight_tensors.append(torch.zeros(size=(self.hidden_units*self.output_dim, self.inference_samples)).to(DEVICE))
 
         # Repeat sampling <inference_samples> times
-        for i, layer in enumerate([l for l in self.model if isinstance(l, BFC)]):
+        for i, layer in enumerate([l for l in self.model if isinstance(l, BaseBFC)]):
             for j in range(self.inference_samples):
                 weight_tensors[i][:, j] = layer.w_var_post.sample().flatten()
             
@@ -359,7 +367,7 @@ class BaseBNN(BaseModel, ABC):
         # Using mean weights
         ####################
         # weight_tensors = []
-        # for layer in [l for l in self.model if isinstance(l, BFC)]:
+        # for layer in [l for l in self.model if isinstance(l, BaseBFC)]:
 
             ################
             # Sampling from N(mu, sigma)
