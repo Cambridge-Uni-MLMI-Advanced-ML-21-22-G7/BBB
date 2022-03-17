@@ -304,7 +304,7 @@ class BaseBNN(BaseModel, ABC):
             else:
                 raise RuntimeError(f'Unrecognised KL re-weighting type: {self.kl_reweighting_type}')
 
-            self.optimizer.zero_grad()
+            self.zero_grad()
 
             # Call the appropriate method for determining the sample ELBO
             if self.local_reparam_trick:
