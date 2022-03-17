@@ -64,7 +64,7 @@ BNN_REGRESSION_PARAMETERS = Parameters(
     prior_type = PRIOR_TYPES.single,
     kl_reweighting_type = KL_REWEIGHTING_TYPES.paper,
     vp_variance_type = VP_VARIANCE_TYPES.paper,
-    local_reparam_trick = True,
+    local_reparam_trick = False,
     # Variational Inference
     weight_mu_range = [-0.2, 0.2],
     weight_rho_range = [-5, -4],
