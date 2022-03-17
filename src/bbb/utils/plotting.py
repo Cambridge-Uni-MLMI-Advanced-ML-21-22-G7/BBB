@@ -40,23 +40,33 @@ def plot_bbb_regression_predictions(
     ax.plot(X_train_arr[:,0], X_train_arr[:,1], label='Original', ls='', marker='x')
     
     # Plot the predictive mean
-    ax.plot(X_val_arr[:,0], Y_val_pred_mean, marker='x', label='Prediction')
+    ax.plot(X_val_arr[:,0], Y_val_pred_mean, marker='x', label='Mean Prediction')
 
     # Two standard deviations
     # ax.fill_between(X_val_arr[:,0], Y_val_pred_mean-2*np.sqrt(Y_val_pred_var), Y_val_pred_mean+2*np.sqrt(Y_val_pred_var), color='tab:green', alpha=0.2)
 
     # 0th and 100th percentile
-    ax.fill_between(X_val_arr[:,0], Y_val_pred_quartiles[0,:], Y_val_pred_quartiles[3,:], color='tab:blue', alpha=0.25)
+    ax.fill_between(X_val_arr[:,0], Y_val_pred_quartiles[0,:], Y_val_pred_quartiles[3,:], color='tab:blue', alpha=0.25,  label='25th-75th Percentile')
     
     # 25th and 75th percentile
-    ax.fill_between(X_val_arr[:,0], Y_val_pred_quartiles[1,:], Y_val_pred_quartiles[2,:], color='tab:orange', alpha=0.50)
+    ax.fill_between(X_val_arr[:,0], Y_val_pred_quartiles[1,:], Y_val_pred_quartiles[2,:], color='tab:orange', alpha=0.50,  label='5th-95th Percentile')
 
     # Formatting of plot
+
+    ##############
+    # Regular Data
+    ##############
     ax.set_xlim([-0.2, 1.3])
-    ax.set_ylim([-0.5, 1.3])
+    ax.set_ylim([-2, 2])
+
+    ##############
+    # Modifed Data
+    ##############
+    # ax.set_xlim([-0.5, 1.5])
+    # ax.set_ylim([-2, 2])
 
     # Add legend
-    ax.legend()
+    ax.legend(loc='lower right')
 
     # Save the figure
     plt.savefig(os.path.join(save_dir, 'plot.png'), pad_inches=0.2, bbox_inches='tight')
