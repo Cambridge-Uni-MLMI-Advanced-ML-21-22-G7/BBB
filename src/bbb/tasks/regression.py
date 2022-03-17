@@ -13,7 +13,7 @@ from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_
 from bbb.config.parameters import Parameters, PriorParameters
 from bbb.models.dnn import RegressionDNN
 from bbb.models.bnn import RegressionBNN
-from bbb.data import generate_regression_data
+from bbb.data import generate_regression_data, generate_modified_regression_data
 
 
 logger = logging.getLogger(__name__)
