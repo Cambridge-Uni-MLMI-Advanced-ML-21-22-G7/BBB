@@ -53,7 +53,7 @@ class MushroomBandit(ABC):
         if eaten:
             if poison:
                 # poison = 1, poisonous
-                return 5 if np.random.rand() > 0.8 else -35
+                return 5 if np.random.rand() > 0.5 else -35
             else:
                 return 5
         else:
