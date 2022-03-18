@@ -25,8 +25,8 @@ from bbb.models.bnn import BanditBNN
 from bbb.data import load_bandit,load_bandit_buffer,load_bandit_train
 
 logger = logging.getLogger(__name__)
-lr = 1e-4
-step_size = 999
+lr = 1e-5
+step_size = 10001
 gamma = 0.5
 idx_list = []
 
@@ -53,7 +53,7 @@ class MushroomBandit(ABC):
         if eaten:
             if poison:
                 # poison = 1, poisonous
-                return 5 if np.random.rand() > 0.5 else -35
+                return 5 if np.random.rand() > 0.8 else -35
             else:
                 return 5
         else:
@@ -66,9 +66,9 @@ class MushroomBandit(ABC):
             return 5 - reward
 
     def init_buffer(self, x: torch.Tensor, y: torch.Tensor,z:torch.Tensor):
-        self.bufferX = x
-        self.bufferY = y
-        self.bufferZ = z
+        self.bufferX = x.clone()
+        self.bufferY = y.clone()
+        self.bufferZ = z.clone()
 
         
     # function to get which mushrooms will be eaten
@@ -79,6 +79,7 @@ class MushroomBandit(ABC):
         try_reject = torch.cat((context,self.action_noeat),-1)
 
         with torch.no_grad():
+            self.net.eval()
             r_eat = sum([self.net(try_eat) for _ in range(self.n_weight_sampling)]).item()
             r_reject = sum([self.net(try_reject) for _ in range(self.n_weight_sampling)]).item()
         eaten = r_eat > r_reject
@@ -97,7 +98,7 @@ class MushroomBandit(ABC):
 
         self.bufferX[self.pointer] = torch.cat((context,action),-1)
         self.bufferY[self.pointer] = torch.Tensor((agent_reward,)).to(DEVICE)
-        self.bufferZ[self.pointer] = poison
+        self.bufferZ[self.pointer] = poison.clone()
         if self.pointer >= 4095:
             self.pointer = 0
         else:
@@ -137,7 +138,7 @@ DNN_RL_PARAMETERS = Parameters(
     batch_size = 64,
     lr = lr,
     gamma = gamma,
-    epochs = 1000,
+    epochs = 50000,
     step_size=step_size,
     early_stopping=False,
     early_stopping_thresh=1e-4
@@ -150,17 +151,20 @@ class Greedy(MushroomBandit):
         self.n_weight_sampling = 1
         self.epsilon = epsilon
         self.net = RegressionDNN(params=DNN_RL_PARAMETERS).to(DEVICE)
+        self.optimizer = torch.optim.Adam(self.net.parameters(),lr=lr)
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=step_size, gamma=gamma)
         self.criterion = torch.nn.MSELoss()
 
         with open(os.path.join(self.net.model_save_dir, 'epsilon.txt'), 'w') as f:
             f.write(str(self.epsilon))
         
     def loss_step(self, x, y, batch_id):
+        self.net.train()
         self.net.zero_grad()
         preds = self.net.forward(x)
         loss = self.criterion(preds, y)
         loss.backward()
-        self.net.optimizer.step()
+        self.optimizer.step()
         return loss
 
 
@@ -203,11 +207,14 @@ class BBB_bandit(MushroomBandit):
         super().__init__()
         self.n_weight_sampling = 2
         self.net = BanditBNN(params=BNN_RL_PARAMETERS).to(DEVICE)
-
+        self.optimizer = torch.optim.Adam(self.net.parameters(),lr=lr)
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=step_size, gamma=gamma)
         with open(os.path.join(self.net.model_save_dir, 'epsilon.txt'), 'w') as f:
             f.write(str(self.epsilon))
         
     def loss_step(self, x, y, batch_id):
+        self.net.train()
+        self.net.zero_grad()
         beta = 2 ** (64 - (batch_id + 1)) / (2 ** 64 - 1)
         beta = torch.Tensor((beta,)).to(DEVICE)
         self.net.optimizer.zero_grad()
@@ -216,6 +223,7 @@ class BBB_bandit(MushroomBandit):
         net_loss = loss[0]
         net_loss.backward()
         self.net.optimizer.step()
+        self.optimizer.step()
         return net_loss.item()
 
 
@@ -235,7 +243,7 @@ def run_rl_training():
 
     # Define settings
     mnets = {
-        'Greedy':Greedy(epsilon=0),
+        'Greedy':Greedy(epsilon=0.0),
         'Greedy 1%':Greedy(epsilon=0.01),
         'Greedy 5%':Greedy(epsilon=0.05),
         # 'BBB':BBB_bandit()
@@ -265,6 +273,7 @@ def run_rl_training():
                     torch.save(result, os.path.join(info_dir, filename))
 
                 avg_loss = net.update(X[step], y[step])
+                net.scheduler.step()
 
                 # Update the loss in tqdm every 10 epochs
                 if not step%10:
