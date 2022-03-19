@@ -67,7 +67,8 @@ The following diagram outlines the class inheritance structure of the implemente
 
 Whilst all code written is our own, the following repositories were used as sources of inspiration when implementing this project:
 
-- [Bayesian Neural Networks](https://github.com/JavierAntoran/Bayesian-Neural-Networks)
+- [Bayesian Neural Networks (1)](https://github.com/JavierAntoran/Bayesian-Neural-Networks)
+- [Bayesian Neural Networks (2)](https://github.com/tennisonliu/bayesian-neural-network)
 - [Weight Uncertainty](https://github.com/danielkelshaw/WeightUncertainty)
 - [PyTorch Bayesian CNN](https://github.com/kumar-shridhar/PyTorch-BayesianCNN)
 - [Weight Uncertainty in Neural Networks](https://github.com/saxena-mayur/Weight-Uncertainty-in-Neural-Networks)
