@@ -8,7 +8,7 @@ from bbb.config.parameters import Parameters, PriorParameters
 from bbb.models.bnn import ClassificationBNN
 from bbb.models.dnn import ClassificationDNN
 from bbb.data import load_mnist
-
+import numpy as np
 logger = logging.getLogger(__name__)
 
 
@@ -19,25 +19,25 @@ logger = logging.getLogger(__name__)
 BBB_CLASSIFY_PARAMETERS = Parameters(
     name = "BBB_classification",
     batch_size = 128,
-    epochs = 300,
+    epochs = 100,
     # Architecture
     input_dim = 28*28,
     output_dim = 10,
     hidden_units = 1200,
     hidden_layers = 3,
     # Paper choices
-    prior_type = PRIOR_TYPES.single,
+    prior_type = PRIOR_TYPES.mixture,
     kl_reweighting_type = KL_REWEIGHTING_TYPES.paper,
     vp_variance_type = VP_VARIANCE_TYPES.paper,
     local_reparam_trick=False,
     # Variational Inference
     weight_mu_range = [-0.2, 0.2],
-    weight_rho_range = [-5, -4],
+    weight_rho_range = [-3, -2],
     prior_params = PriorParameters(
-        w_sigma=1.,
-        b_sigma=1.,
-        w_sigma_2=0.2,
-        b_sigma_2=0.2,
+        w_sigma=np.exp(-0),
+        b_sigma=np.exp(-0),
+        w_sigma_2=np.exp(-8),
+        b_sigma_2=np.exp(-8),
         w_mixture_weight=0.5,
         b_mixture_weight=0.5,
     ),

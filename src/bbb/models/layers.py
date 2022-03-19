@@ -61,8 +61,7 @@ class GaussianVarPost(nn.Module):
         return sample
 
     def log_prob(self, value):
-        log_prob = distributions.Normal(loc=self.mu, scale=self.sigma).log_prob(value)
-        return log_prob
+        return distributions.Normal(loc=self.mu, scale=self.sigma).log_prob(value)
 
 
 class BaseBFC(nn.Module):
