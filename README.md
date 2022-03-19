@@ -65,7 +65,7 @@ The following diagram outlines the class inheritance structure of the implemente
 
 ## Citations
 
-Whilst all code written is our own, the following repositories were used as sources of inspiration when implementing this project:
+The following repositories were used as sources and for inspiration when implementing this project, and when debugging:
 
 - [Bayesian Neural Networks (1)](https://github.com/JavierAntoran/Bayesian-Neural-Networks)
 - [Bayesian Neural Networks (2)](https://github.com/tennisonliu/bayesian-neural-network)
