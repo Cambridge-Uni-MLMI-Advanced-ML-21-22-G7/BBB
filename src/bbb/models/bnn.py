@@ -79,7 +79,7 @@ class BaseBNN(BaseModel, ABC):
         model_layers = []
 
         # Input layer
-        model_layers.append(BFC(
+        model_layers.append(BFC_CLASS(
             dim_in=self.input_dim,
             dim_out=self.hidden_units,
             **bfc_arguments)
@@ -96,7 +96,7 @@ class BaseBNN(BaseModel, ABC):
             model_layers.append(nn.ReLU())
         
         # Final output layer
-        model_layers.append(BFC(
+        model_layers.append(BFC_CLASS(
             dim_in=self.hidden_units,
             dim_out=self.output_dim,
             **bfc_arguments)

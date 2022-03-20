@@ -1,5 +1,7 @@
 import logging
 
+import numpy as np
+
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.utils.tqdm import train_with_tqdm
 from bbb.utils.plotting import plot_weight_samples
@@ -8,7 +10,7 @@ from bbb.config.parameters import Parameters, PriorParameters
 from bbb.models.bnn import ClassificationBNN
 from bbb.models.dnn import ClassificationDNN
 from bbb.data import load_mnist
-import numpy as np
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,7 +21,7 @@ logger = logging.getLogger(__name__)
 BBB_CLASSIFY_PARAMETERS = Parameters(
     name = "BBB_classification",
     batch_size = 128,
-    epochs = 100,
+    epochs = 300,
     # Architecture
     input_dim = 28*28,
     output_dim = 10,
