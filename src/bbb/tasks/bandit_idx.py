@@ -25,10 +25,12 @@ from bbb.models.bnn import BanditBNN
 from bbb.data import load_bandit,load_bandit_buffer,load_bandit_train
 
 logger = logging.getLogger(__name__)
-lr = 1e-5
-step_size = 10001
+lr = 1e-4
+step_size = 5000
 gamma = 0.5
 idx_list = []
+sigma1 = -0
+sigma2 = -6
 
 Var = lambda x, dtype=torch.FloatTensor: Variable(
     torch.from_numpy(x).type(dtype)).to(DEVICE)
@@ -36,7 +38,7 @@ Var = lambda x, dtype=torch.FloatTensor: Variable(
 # coding a class for this
 class MushroomBandit(ABC):
     # initializing
-    def __init__(self, n_weight_sampling=2):
+    def __init__(self, n_weight_sampling=1):
         self.epsilon = 0
         self.net = None
         self.loss = None
@@ -161,7 +163,8 @@ class Greedy(MushroomBandit):
     def loss_step(self, x, y, batch_id):
         self.net.train()
         self.net.zero_grad()
-        preds = self.net.forward(x)
+        self.net.eval()
+        preds = self.net(x)
         loss = self.criterion(preds, y)
         loss.backward()
         self.optimizer.step()
@@ -176,10 +179,10 @@ BNN_RL_PARAMETERS = Parameters(
     weight_rho_range = [-5, -4],
 
     prior_params = PriorParameters(
-        w_sigma=np.exp(-0),
-        b_sigma=np.exp(-0),
-        w_sigma_2=np.exp(-6),
-        b_sigma_2=np.exp(-6),
+        w_sigma=np.exp(sigma1),
+        b_sigma=np.exp(sigma1),
+        w_sigma_2=np.exp(sigma2),
+        b_sigma_2=np.exp(sigma2),
         # w_sigma=1.,
         # b_sigma=1.,
         # w_sigma_2=0.2,
@@ -246,7 +249,7 @@ def run_rl_training():
         'Greedy':Greedy(epsilon=0.0),
         'Greedy 1%':Greedy(epsilon=0.01),
         'Greedy 5%':Greedy(epsilon=0.05),
-        # 'BBB':BBB_bandit()
+        'BBB':BBB_bandit()
     }
 
     NB_STEPS = 50000
@@ -268,7 +271,7 @@ def run_rl_training():
 
                 if not step%4096:
                     result = torch.cat((net.bufferX, net.bufferY,net.bufferZ),1)
-                    filename = name + '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,step) + '.pt'
+                    filename = name + '_mix_sigma_{4}_{5}_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,step,sigma1,sigma2) + '.pt'
                     print(filename)
                     torch.save(result, os.path.join(info_dir, filename))
 
@@ -288,7 +291,7 @@ def run_rl_training():
                     ax.set_ylabel('Regret') 
                     ax.legend()
                     plt.yticks(range(4), ticks)
-                    filename = name +'GPU' + '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,step) + '.jpg'
+                    filename = name +'_mix_new' + '_sigma_{4}_{5}_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,step,sigma1,sigma2) + '.jpg'
                     print(filename)
                     plt.savefig(os.path.join(plot_dir, filename))
 
@@ -300,7 +303,7 @@ def run_rl_training():
     for name, net in mnets.items():
         np.save(os.path.join(net.net.model_save_dir, 'cum_regrets.npy'), np.array(net.cum_regrets))
         result = torch.cat((net.bufferX, net.bufferY,net.bufferZ),1)
-        filename = name +'GPU'+ '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final') + '.pt'
+        filename = name +'GPU'+ '_mix_new_sigma_{4}_{5}_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final',sigma1,sigma2) + '.pt'
         torch.save(result, os.path.join(info_dir, filename))
 
     # Plotting
@@ -316,11 +319,11 @@ def run_rl_training():
     plt.yticks(range(4), ticks)
     
     # Save the plot
-    filename = name +'GPU'+  '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final') + '.jpg'
+    filename = name +'GPU'+  '_mix_new_sigma_{4}_{5}_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final',sigma1,sigma2) + '.jpg'
     plt.savefig(os.path.join(plot_dir, filename))
 
     df = pd.DataFrame(columns=['idx'],data=idx_list)
-    filename = name +'GPU'+  '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final')
+    filename = name +'GPU'+  '_mix_sigma_{4}_{5}_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final',sigma1,sigma2)
     df.to_csv(filename+".csv", encoding='utf-8', index=False)
     # Show the plot
     # plt.show()
