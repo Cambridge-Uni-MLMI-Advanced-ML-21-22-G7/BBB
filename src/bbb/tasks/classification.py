@@ -1,5 +1,7 @@
 import logging
 
+import numpy as np
+
 from bbb.utils.pytorch_setup import DEVICE
 from bbb.utils.tqdm import train_with_tqdm
 from bbb.utils.plotting import plot_weight_samples
@@ -26,18 +28,18 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     hidden_units = 1200,
     hidden_layers = 3,
     # Paper choices
-    prior_type = PRIOR_TYPES.single,
+    prior_type = PRIOR_TYPES.mixture,
     kl_reweighting_type = KL_REWEIGHTING_TYPES.paper,
     vp_variance_type = VP_VARIANCE_TYPES.paper,
     local_reparam_trick=False,
     # Variational Inference
     weight_mu_range = [-0.2, 0.2],
-    weight_rho_range = [-5, -4],
+    weight_rho_range = [-3, -2],
     prior_params = PriorParameters(
-        w_sigma=1.,
-        b_sigma=1.,
-        w_sigma_2=0.2,
-        b_sigma_2=0.2,
+        w_sigma=np.exp(-0),
+        b_sigma=np.exp(-0),
+        w_sigma_2=np.exp(-8),
+        b_sigma_2=np.exp(-8),
         w_mixture_weight=0.5,
         b_mixture_weight=0.5,
     ),
