@@ -21,14 +21,18 @@ from bbb.config.parameters import Parameters, PriorParameters
 # from bbb.config.constants import (
 #     KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES, PLOTS_DIR
 # )
-from bbb.models.bnn import BanditBNN
+from bbb.models.bnn import RegressionBNN
 from bbb.data import load_bandit,load_bandit_buffer,load_bandit_train
 
 logger = logging.getLogger(__name__)
+
+fixed_permutation = False
 lr = 1e-4
-step_size = 5001
+step_size = 5000
 gamma = 0.5
 idx_list = []
+sigma1 = -0
+sigma2 = -6
 
 Var = lambda x, dtype=torch.FloatTensor: Variable(
     torch.from_numpy(x).type(dtype)).to(DEVICE)
@@ -36,7 +40,7 @@ Var = lambda x, dtype=torch.FloatTensor: Variable(
 # coding a class for this
 class MushroomBandit(ABC):
     # initializing
-    def __init__(self, n_weight_sampling=2):
+    def __init__(self, n_weight_sampling=1):
         self.epsilon = 0
         self.net = None
         self.loss = None
@@ -45,41 +49,46 @@ class MushroomBandit(ABC):
         self.bufferY = None
         self.cum_regrets = [0]
         self.n_weight_sampling = n_weight_sampling
-        self.action_eaten = torch.Tensor([1,0]).to(DEVICE)
-        self.action_noeat = torch.Tensor([0,1]).to(DEVICE)
         self.pointer = 0
+
+    @property
+    def action_eaten(self):
+        return torch.Tensor([1,0]).to(DEVICE)
+
+    @property
+    def action_noeat(self):
+        return torch.Tensor([0,1]).to(DEVICE)
 
     def get_reward(self,eaten,poison):
         if eaten:
             if poison:
+                # Agent eats poison mushroom; 50 % chance of "death"
                 # poison = 1, poisonous
                 return 5 if np.random.rand() > 0.5 else -35
             else:
+                # Agent eats edible mushroom
                 return 5
         else:
+            # Agent does not eat mushroom
             return 0
     
     def calculate_regret(self, reward, poison):
+        """Oracle will always receive a reward of 5 got an edible mushroom
+        or zero for a poisonous mushroom.
+        """
         if poison:
             return 0 - reward
         else:
             return 5 - reward
 
-    def init_buffer(self, x:torch.Tensor, y: torch.Tensor):
-        self.bufferX = torch.empty(4096, 97).to(DEVICE)
-        self.bufferY = torch.empty(4096, 1).to(DEVICE)
-        self.bufferZ = torch.empty(4096, 1).to(DEVICE)
-        
-        for i, idx in enumerate(np.random.choice(range(x.shape[0]), 4096)):
-            eaten = 1 if np.random.rand() > 0.5 else 0
-            action = self.action_eaten if eaten else self.action_noeat
-            self.bufferX[i] = torch.cat((x[idx],action),-1)
-            self.bufferY[i] = self.get_reward(eaten, y[idx])
-            self.bufferZ[i] = y[idx]
-        
+    def init_buffer(self, x: torch.Tensor, y: torch.Tensor,z:torch.Tensor):
+        self.bufferX = x.clone()
+        self.bufferY = y.clone()
+        self.bufferZ = z.clone()
+
     # function to get which mushrooms will be eaten
-    def eat_mushrooms(self, X: torch.Tensor, y: torch.Tensor, mushroom_idx: int):
-        context, poison = X[mushroom_idx], y[mushroom_idx]
+    def eat_mushrooms(self, X: torch.Tensor, y: torch.Tensor):
+        context, poison = X, y
 
         try_eat = torch.cat((context,self.action_eaten),-1)
         try_reject = torch.cat((context,self.action_noeat),-1)
@@ -97,14 +106,11 @@ class MushroomBandit(ABC):
         # Get rewards and update buffer
         action = self.action_eaten if eaten else self.action_noeat
 
-        # Get rewards and add these to the buffer
-        # self.bufferX = torch.vstack((self.bufferX, torch.cat((context,action),-1)))
-        # self.bufferY = torch.vstack((self.bufferY, torch.Tensor((agent_reward,)).to(DEVICE)))
-        # self.bufferZ = torch.vstack((self.bufferZ, torch.Tensor((poison,)).to(DEVICE)))
+        self.bufferX[self.pointer, :-2] = context
+        self.bufferX[self.pointer, -2:] = action
+        self.bufferY[self.pointer] = agent_reward
+        self.bufferZ[self.pointer] = poison.clone()
 
-        self.bufferX[self.pointer] = torch.cat((context,action),-1)
-        self.bufferY[self.pointer] = torch.Tensor((agent_reward,)).to(DEVICE)
-        self.bufferZ[self.pointer] = poison
         if self.pointer >= 4095:
             self.pointer = 0
         else:
@@ -115,19 +121,18 @@ class MushroomBandit(ABC):
         self.cum_regrets.append(self.cum_regrets[-1]+regret)
 
     # Update buffer
-    def update(self, X: torch.Tensor, y: torch.Tensor, mushroom_idx: int):
-        self.eat_mushrooms(X, y, mushroom_idx)
+    def update(self, X: torch.Tensor, y: torch.Tensor):
+        self.eat_mushrooms(X, y)
 
         # idx pool
-        l = len(self.bufferX)
-        idx_pool = range(l) if l >= 4096 else ((int(4096//l) + 1)*list(range(l)))
-        idx_pool = np.random.permutation(idx_pool[-4096:])
+        assert len(self.bufferX) == 4096
+        idx_pool = np.random.permutation(len(self.bufferX))
         context_pool = self.bufferX[idx_pool, :]
         reward_pool = self.bufferY[idx_pool]
 
         avg_loss = 0
         for i in range(0, 4096, 64):
-            loss = self.loss_step(context_pool[i:i+64], reward_pool[i:i+64], i//64)
+            loss = self.loss_step(context_pool[i:i+64,:], reward_pool[i:i+64], i//64)
             avg_loss = (1/(i+1))*loss + (i/(i+1))*avg_loss
         return avg_loss
     
@@ -144,7 +149,7 @@ DNN_RL_PARAMETERS = Parameters(
     batch_size = 64,
     lr = lr,
     gamma = gamma,
-    epochs = 1000,
+    epochs = 50000,
     step_size=step_size,
     early_stopping=False,
     early_stopping_thresh=1e-4
@@ -163,12 +168,13 @@ class Greedy(MushroomBandit):
             f.write(str(self.epsilon))
         
     def loss_step(self, x, y, batch_id):
+        self.net.train()
         self.net.zero_grad()
-        preds = self.net.forward(x)
+        preds = self.net(x)
         loss = self.criterion(preds, y)
         loss.backward()
         self.net.optimizer.step()
-        return loss
+        return loss.item()
 
 
 BNN_RL_PARAMETERS = Parameters(
@@ -177,12 +183,12 @@ BNN_RL_PARAMETERS = Parameters(
     output_dim = 1,
     weight_mu_range = [-0.2, 0.2],
     weight_rho_range = [-5, -4],
-
+    regression_likelihood_noise=1.0,
     prior_params = PriorParameters(
-        w_sigma=np.exp(-0),
-        b_sigma=np.exp(-0),
-        w_sigma_2=np.exp(-6),
-        b_sigma_2=np.exp(-6),
+        w_sigma=np.exp(sigma1),
+        b_sigma=np.exp(sigma1),
+        w_sigma_2=np.exp(sigma2),
+        b_sigma_2=np.exp(sigma2),
         # w_sigma=1.,
         # b_sigma=1.,
         # w_sigma_2=0.2,
@@ -195,7 +201,7 @@ BNN_RL_PARAMETERS = Parameters(
     batch_size = 64,
     lr = lr,
     gamma = gamma,
-    epochs=50000,
+    epochs=1000,
     step_size=step_size,
     elbo_samples = 2,
     inference_samples = 10,
@@ -209,19 +215,16 @@ class BBB_bandit(MushroomBandit):
     def __init__(self):
         super().__init__()
         self.n_weight_sampling = 2
-        self.net = BanditBNN(params=BNN_RL_PARAMETERS).to(DEVICE)
-
+        self.elbo_samples = BNN_RL_PARAMETERS.elbo_samples
+        self.net = RegressionBNN(params=BNN_RL_PARAMETERS).to(DEVICE)
         with open(os.path.join(self.net.model_save_dir, 'epsilon.txt'), 'w') as f:
             f.write(str(self.epsilon))
         
     def loss_step(self, x, y, batch_id):
-        self.net.eval()
-        self.net.model.eval()
+        self.net.train()
+        self.net.zero_grad()
         beta = 2 ** (64 - (batch_id + 1)) / (2 ** 64 - 1)
-        beta = torch.Tensor((beta,)).to(DEVICE)
-        self.net.optimizer.zero_grad()
-        num_samples = 2
-        loss = self.net.sample_ELBO(x, y, beta,num_samples)
+        loss = self.net.sample_ELBO(x, y, beta, self.elbo_samples)
         net_loss = loss[0]
         net_loss.backward()
         self.net.optimizer.step()
@@ -230,7 +233,6 @@ class BBB_bandit(MushroomBandit):
 
 def run_rl_training():
     # Load the data
-    X, y = load_bandit()
     
     # Create the directory for storing plots, if it does not already exist
     plot_dir = os.path.join(PLOTS_DIR, 'rl')
@@ -244,34 +246,44 @@ def run_rl_training():
 
     # Define settings
     mnets = {
-        # 'Greedy':Greedy(epsilon=0),
-        # 'Greedy 1%':Greedy(epsilon=0.01),
-        # 'Greedy 5%':Greedy(epsilon=0.05),
+        'Greedy':Greedy(epsilon=0.0),
+        'Greedy 1%':Greedy(epsilon=0.01),
+        'Greedy 5%':Greedy(epsilon=0.05),
         'BBB':BBB_bandit()
     }
 
     NB_STEPS = 50000
 
     # Initialise buffers
+    X,y,z = load_bandit_buffer()
     for name, net in mnets.items():
-        net.init_buffer(X, y)
+        net.init_buffer(X, y,z)
+
+    if fixed_permutation:
+        X, y = load_bandit_train()
+    else:
+        X, y = load_bandit()
+        idx_permutation = np.random.choice(range(X.shape[0]), size=NB_STEPS, replace=True)
+        X = X[idx_permutation, :]
+        y = y[idx_permutation]
+
+        assert X.shape[0] == NB_STEPS
+        assert y.shape[0] == NB_STEPS
 
     # Train the RL models
     with tqdm(range(NB_STEPS), unit="batch") as t_epoch:
         for step in t_epoch:
-            mushroom_idx = np.random.randint(X.shape[0])
-            idx_list.append(mushroom_idx)
+            # mushroom_idx = np.random.randint(X.shape[0])
+            # idx_list.append(mushroom_idx)
             for name, net in mnets.items():
-                # Ensure the network is in training mode
-                net.net.train()
 
                 if not step%4096:
                     result = torch.cat((net.bufferX, net.bufferY,net.bufferZ),1)
-                    filename = name + '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,step) + '.pt'
+                    filename = name + '_mix_sigma_{4}_{5}_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,step,sigma1,sigma2) + '.pt'
                     print(filename)
                     torch.save(result, os.path.join(info_dir, filename))
 
-                avg_loss = net.update(X, y, mushroom_idx)
+                avg_loss = net.update(X[step], y[step])
                 net.net.scheduler.step()
 
                 # Update the loss in tqdm every 10 epochs
@@ -287,7 +299,7 @@ def run_rl_training():
                     ax.set_ylabel('Regret') 
                     ax.legend()
                     plt.yticks(range(4), ticks)
-                    filename = name +'GPU' + '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,step) + '.jpg'
+                    filename = name +'_mix_new' + '_sigma_{4}_{5}_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,step,sigma1,sigma2) + '.jpg'
                     print(filename)
                     plt.savefig(os.path.join(plot_dir, filename))
 
@@ -299,7 +311,7 @@ def run_rl_training():
     for name, net in mnets.items():
         np.save(os.path.join(net.net.model_save_dir, 'cum_regrets.npy'), np.array(net.cum_regrets))
         result = torch.cat((net.bufferX, net.bufferY,net.bufferZ),1)
-        filename = name +'GPU'+ '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final') + '.pt'
+        filename = name +'GPU'+ '_mix_new_sigma_{4}_{5}_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final',sigma1,sigma2) + '.pt'
         torch.save(result, os.path.join(info_dir, filename))
 
     # Plotting
@@ -315,11 +327,11 @@ def run_rl_training():
     plt.yticks(range(4), ticks)
     
     # Save the plot
-    filename = name +'GPU'+  '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final') + '.jpg'
+    filename = name +'GPU'+  '_mix_new_sigma_{4}_{5}_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final',sigma1,sigma2) + '.jpg'
     plt.savefig(os.path.join(plot_dir, filename))
 
     df = pd.DataFrame(columns=['idx'],data=idx_list)
-    filename = name +'GPU'+  '_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final')
+    filename = name +'GPU'+  '_mix_sigma_{4}_{5}_lr_{0}_stepsize_{1}_gamma_{2}_epoch_{3}'.format(lr,step_size,gamma,'final',sigma1,sigma2)
     df.to_csv(filename+".csv", encoding='utf-8', index=False)
     # Show the plot
     # plt.show()

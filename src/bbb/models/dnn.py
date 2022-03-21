@@ -113,6 +113,9 @@ class BaseDNN(BaseModel, ABC):
             
             loss.backward()
             self.optimizer.step()
+        
+        # Step the scheduler forward
+        self.scheduler.step()
 
         # Record the loss
         self.loss_hist.append(loss.item())
