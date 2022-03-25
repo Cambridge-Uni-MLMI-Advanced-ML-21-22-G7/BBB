@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from time import sleep
-from typing import Tuple, List
+from typing import Tuple, List, Union
 
 import numpy as np
 import torch
@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from bbb.utils.pytorch_setup import DEVICE
-from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES
+from bbb.config.constants import KL_REWEIGHTING_TYPES, PRIOR_TYPES, VP_VARIANCE_TYPES
 from bbb.config.parameters import Parameters
 from bbb.models.base import BaseModel
 from bbb.models.layers import BFC, BFC_LRT, BaseBFC
@@ -333,6 +333,47 @@ class BaseBNN(BaseModel, ABC):
 
         # Return the ELBO figure of the final batch as a representative example
         return batch_elbo.item()
+
+    def get_weights(self) -> Union[List[Tensor], List[Tensor]]:
+        """Obtain the mean and standard deviation tensors of the weights in
+        each layer.
+
+        :return: list of mean and standard deviation tensors
+        :rtype: Union[List[Tensor], List[Tensor]]
+        """
+        weight_means = []
+        weight_stds = []
+        
+        for layer in [l for l in self.model if isinstance(l, BaseBFC)]:
+            weight_means.append(layer.w_var_post.to(DEVICE).mu)
+            weight_stds.append(layer.w_var_post.to(DEVICE).sigma)
+        
+        return weight_means, weight_stds
+
+    def prune_weights(self, weight_fill_masks: List[Tensor]):
+        """Perform a masked fill of the mean and rho tensors. Effectively we are
+        pruning those weights that are True in the mask.
+
+        :param weight_fill_masks: list of masks, one for each layer
+        :type weight_fill_masks: List[Tensor]
+        """
+
+        # The value to set rho to depends on the variance type employed
+        # We want the resulting varaince to be 0
+        if self.vp_variance_type == VP_VARIANCE_TYPES.paper:
+            rho_replacement = -np.inf
+        elif self.vp_variance_type == VP_VARIANCE_TYPES.simple:
+            rho_replacement = 0
+
+        # Perform a masked fill, using the list of weight_fill_masks
+        for i, layer in enumerate([l for l in self.model if isinstance(l, BaseBFC)]):
+            layer.w_var_post.mu = nn.Parameter(
+                layer.w_var_post.mu.masked_fill(weight_fill_masks[i], 0)
+            )
+            layer.w_var_post.rho = nn.Parameter(
+                layer.w_var_post.rho.masked_fill(weight_fill_masks[i], rho_replacement)
+            )
+
 
     def weight_samples(self) -> List[Tensor]:
         """Sample the BFC layer weights.
