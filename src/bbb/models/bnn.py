@@ -363,7 +363,7 @@ class BaseBNN(BaseModel, ABC):
         # Repeat sampling <inference_samples> times
         for i, layer in enumerate([l for l in self.model if isinstance(l, BaseBFC)]):
             for j in range(self.inference_samples):
-                weight_tensors[i][:, j] = layer.w_var_post.sample().flatten()
+                weight_tensors[i][:, j] = layer.w_var_post.to(DEVICE).sample().flatten()
             
             # Take the mean across the samples
             # weight_tensors[i] = weight_tensors[i].mean(axis=-1)
