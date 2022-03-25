@@ -33,5 +33,6 @@
     "early_stopping": false,
     "early_stopping_thresh": 0,
     "model_save_basedir": "./saved_models",
-    "tensorboard_save_dir": "./tensorboard"
+    "tensorboard_save_dir": "./tensorboard",
+    "step_size": 5000
 }
