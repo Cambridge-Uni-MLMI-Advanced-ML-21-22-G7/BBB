@@ -174,6 +174,27 @@ class RegressionDNN(RegressionEval, BaseDNN):
         # Hence, using None here to keep return dimensions consistent
         return preds, None, None
 
+    # def lpd(self, X: Tensor, Y: Tensor):
+    #     """Calculate the log predictive density of the model.
+
+    #     https://vasishth.github.io/bayescogsci/book/expected-log-predictive-density-of-a-model.html
+    #     """
+    #     # Ensure tensor is assigned to correct device
+    #     X = X.to(DEVICE)
+    #     Y = Y.to(DEVICE)
+
+    #     # Put model into evaluation mode
+    #     self.eval()
+
+    #     # Initialise tensor to hold predictions
+    #     lpd = 0
+
+    #     with torch.no_grad():
+    #         preds = self.forward(X)
+    #         lpd += torch.distributions.Normal(preds, self.regression_likelihood_noise).log_prob(Y).mean()
+
+    #     return lpd
+
 class ClassificationDNN(ClassificationEval, BaseDNN):
     # NOTE: This class inherits from ClassificationEval and then BaseDNN
     # The order here is important
