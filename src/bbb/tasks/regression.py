@@ -157,7 +157,7 @@ DNN_REGRESSION_PARAMETERS = Parameters(
     opt_choice = 'Adam',
     lr = 1e-3,
     # LR Scheduler
-    step_size = 500,
+    step_size = 5000,  # LR scheduler had not previously been updating
     gamma=0.5,
     # Early stopping
     early_stopping = False,
