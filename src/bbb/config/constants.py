@@ -20,6 +20,7 @@ class _KlReweightingTypes:
     """
     simple: int = 0
     paper: int = 1
+    paper_inv: int = 2
 KL_REWEIGHTING_TYPES = _KlReweightingTypes()
 
 @dataclass

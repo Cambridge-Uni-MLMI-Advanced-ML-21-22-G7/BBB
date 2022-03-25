@@ -307,6 +307,8 @@ class BaseBNN(BaseModel, ABC):
                 pi = 1/num_batches
             elif self.kl_reweighting_type == KL_REWEIGHTING_TYPES.paper:
                 pi = 2 ** (num_batches - (idx + 1)) / (2 ** num_batches - 1)
+            elif self.kl_reweighting_type == KL_REWEIGHTING_TYPES.paper_inv:
+                pi = 2 ** idx / (2 ** num_batches - 1)
             else:
                 raise RuntimeError(f'Unrecognised KL re-weighting type: {self.kl_reweighting_type}')
 
