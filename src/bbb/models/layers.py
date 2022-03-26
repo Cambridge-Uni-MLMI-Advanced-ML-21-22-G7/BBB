@@ -41,9 +41,9 @@ class GaussianVarPost(nn.Module):
     def sigma(self):
         # PyTorch does not allow scale values of 0, hence add a tiny value to sigma
         if self.vp_var_type == VP_VARIANCE_TYPES.paper:
-            return torch.log1p(torch.exp(self.rho)) + 1e-16  # section 3.2
+            return torch.log1p(torch.exp(self.rho)) + 1e-32  # section 3.2
         elif self.vp_var_type == VP_VARIANCE_TYPES.simple:
-            return torch.log(torch.exp(self.rho)) + 1e-16 
+            return torch.log(torch.exp(self.rho)) + 1e-32
         else:
             raise RuntimeError(f'Unrecognised variational posterior variance type: {self.vp_var_type}')
 
@@ -214,7 +214,7 @@ class BFC_LRT(BaseBFC):
         
         if self.training or sample:
             gamma = nn.functional.linear(input, self.w_var_post.mu)
-            delta = torch.sqrt(nn.functional.linear(input.pow(2), self.w_var_post.sigma.pow(2)))
+            delta = torch.sqrt(1e-32 + nn.functional.linear(input.pow(2), self.w_var_post.sigma.pow(2)))
 
             w_zeta = distributions.Normal(0,1).sample(gamma.size()).to(DEVICE)
             b_zeta = distributions.Normal(0,1).sample(self.b_var_post.mu.size()).to(DEVICE)
