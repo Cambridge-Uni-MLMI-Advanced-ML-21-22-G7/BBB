@@ -80,6 +80,9 @@ class BaseBFC(nn.Module):
     ):
         super().__init__()
         
+        self.dim_in = dim_in
+        self.dim_out = dim_out
+
         # Create IN X OUT weight tensor that we can sample from
         # This is the variational posterior over the weights
         self.w_var_post = GaussianVarPost(weight_mu_range, weight_rho_range, dim_in=dim_in, dim_out=dim_out, vp_var_type=vp_var_type)

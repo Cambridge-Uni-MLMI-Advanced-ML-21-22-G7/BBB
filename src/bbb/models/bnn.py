@@ -374,6 +374,27 @@ class BaseBNN(BaseModel, ABC):
                 layer.w_var_post.rho.masked_fill(weight_fill_masks[i], rho_replacement)
             )
 
+    def get_pruned_weight_samples(self, weight_fill_masks):
+        """ Returns the samples of weights that are active post-pruning """
+        bfc_layers = [layer for layer in self.model if isinstance(layer, BaseBFC)]
+        non_pruned_samples = []
+    
+        weight_samples = self.weight_samples()
+        for layer_samples, layer, layer_mask in zip(weight_samples, bfc_layers, weight_fill_masks):
+        
+            ls = torch.reshape(layer_samples, shape=(self.inference_samples, layer.dim_in, layer.dim_out))
+            non_pruned_samples_layer = []
+        
+            for i, sample in enumerate(ls):
+                non_pruned_weights = sample[~layer_mask.T]
+                num_non_pruned_weights, num_weights = non_pruned_weights.shape[0], sample.shape[0]*sample.shape[1]
+                non_pruned_samples_layer.append(non_pruned_weights.flatten())
+
+                print("Number of non-pruned weights: {} - {} of original layer".format(num_non_pruned_weights, round(num_non_pruned_weights/num_weights, 2)))
+
+            non_pruned_samples.append(torch.flatten(torch.stack(non_pruned_samples_layer)))
+
+        return non_pruned_samples
 
     def weight_samples(self) -> List[Tensor]:
         """Sample the BFC layer weights.
