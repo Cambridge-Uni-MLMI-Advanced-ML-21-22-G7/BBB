@@ -25,6 +25,51 @@ def load_mnist(train: bool, batch_size: int, shuffle: bool) -> DataLoader:
         num_workers=0
     )
 
+class MnistAdversarialDataset(Dataset):
+    def __init__(self, size: int, epsilon: int = 0.1, randomise: bool = False) -> None:
+        super().__init__()
+
+        if epsilon > 0:
+            x_data = np.load(f'../data/adversarial_mnist/x_grad_{epsilon}.npy')
+        else:
+            x_data = np.load('../data/adversarial_mnist/x_orig.npy')
+
+        y_data = np.load('../data/adversarial_mnist/y_grad.npy')
+
+        if randomise:
+            idx = np.random.permutation(np.arange(size))
+            x_data = x_data[idx,:,:,:]
+            y_data = y_data[idx]
+
+        self.x = x_data[:size,:,:,:]
+        self.y = y_data[:size]
+
+    def __len__(self):
+        return self.x.shape[0]
+
+    def __getitem__(self, index) -> T_co:
+        return self.x[index], self.y[index]
+
+def load_adverserial_mnist(
+    train: bool,
+    size: int,
+    batch_size: int,
+    shuffle: bool,
+    epsilon: int = 0.1,
+    randomise: bool = False
+) -> DataLoader:
+    if train:
+        raise RuntimeError('Cannot train using adversarial data!')
+    else:
+        return DataLoader(
+            MnistAdversarialDataset(size=size, epsilon=epsilon, randomise=randomise),
+            batch_size=batch_size, 
+            shuffle=shuffle,
+            drop_last=True,  # This should be set to true, else it will disrupt average calculations
+            pin_memory=True,
+            num_workers=0
+        )
+
 def load_bandit() -> Tuple[torch.Tensor, torch.Tensor]:
     # reading the dataset
     df = pd.read_csv(MUSHROOM_DATASET_PATH)
