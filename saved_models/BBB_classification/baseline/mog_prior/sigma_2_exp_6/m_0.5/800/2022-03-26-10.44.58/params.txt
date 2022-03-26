@@ -1,0 +1,42 @@
+{
+    "name": "BBB_classification",
+    "input_dim": 784,
+    "output_dim": 10,
+    "batch_size": 128,
+    "epochs": 300,
+    "hidden_units": 800,
+    "hidden_layers": 3,
+    "lr": 0.0001,
+    "step_size": 5000,
+    "opt_choice": "Adam",
+    "gamma": 0.1,
+    "weight_mu_range": [
+        -0.2,
+        0.2
+    ],
+    "weight_rho_range": [
+        -5,
+        -4
+    ],
+    "prior_params": {
+        "w_sigma": 1.0,
+        "b_sigma": 1.0,
+        "w_sigma_2": 0.0024787521766663585,
+        "b_sigma_2": 0.0024787521766663585,
+        "w_mixture_weight": 0.5,
+        "b_mixture_weight": 0.5
+    },
+    "elbo_samples": 2,
+    "inference_samples": 10,
+    "regression_likelihood_noise": null,
+    "kl_reweighting_type": 1,
+    "vp_variance_type": 1,
+    "prior_type": 1,
+    "local_reparam_trick": false,
+    "dropout": false,
+    "dropout_p": null,
+    "early_stopping": false,
+    "early_stopping_thresh": 0,
+    "model_save_basedir": "./saved_models",
+    "tensorboard_save_dir": "./tensorboard"
+}

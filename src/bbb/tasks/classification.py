@@ -34,12 +34,12 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     local_reparam_trick=False,
     # Variational Inference
     weight_mu_range = [-0.2, 0.2],
-    weight_rho_range = [-3, -2],
+    weight_rho_range = [-5, -4],
     prior_params = PriorParameters(
         w_sigma=np.exp(-0),
         b_sigma=np.exp(-0),
-        w_sigma_2=np.exp(-8),
-        b_sigma_2=np.exp(-8),
+        w_sigma_2=np.exp(-6),
+        b_sigma_2=np.exp(-6),
         w_mixture_weight=0.5,
         b_mixture_weight=0.5,
     ),
@@ -49,7 +49,7 @@ BBB_CLASSIFY_PARAMETERS = Parameters(
     opt_choice = 'Adam',
     lr = 1e-4,
     # LR Scheduler
-    step_size = 75,
+    step_size = 5000,
 )
 
 def run_bbb_mnist_classification_training():
