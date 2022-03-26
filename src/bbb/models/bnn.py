@@ -390,8 +390,6 @@ class BaseBNN(BaseModel, ABC):
                 num_non_pruned_weights, num_weights = non_pruned_weights.shape[0], sample.shape[0]*sample.shape[1]
                 non_pruned_samples_layer.append(non_pruned_weights.flatten())
 
-                print("Number of non-pruned weights: {} - {} of original layer".format(num_non_pruned_weights, round(num_non_pruned_weights/num_weights, 2)))
-
             non_pruned_samples.append(torch.flatten(torch.stack(non_pruned_samples_layer)))
 
         return non_pruned_samples
