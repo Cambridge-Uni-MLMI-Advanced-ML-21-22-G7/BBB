@@ -39,10 +39,11 @@ class GaussianVarPost(nn.Module):
 
     @property
     def sigma(self):
+        # PyTorch does not allow scale values of 0, hence add a tiny value to sigma
         if self.vp_var_type == VP_VARIANCE_TYPES.paper:
-            return torch.log1p(torch.exp(self.rho))  # section 3.2
+            return torch.log1p(torch.exp(self.rho)) + 1e-32  # section 3.2
         elif self.vp_var_type == VP_VARIANCE_TYPES.simple:
-            return torch.log(torch.exp(self.rho))
+            return torch.log(torch.exp(self.rho)) + 1e-32
         else:
             raise RuntimeError(f'Unrecognised variational posterior variance type: {self.vp_var_type}')
 
