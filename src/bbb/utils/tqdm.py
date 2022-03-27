@@ -56,7 +56,7 @@ def train_with_tqdm(net: nn.Module, train_data: DataLoader, epochs: int, eval_da
                 net.best_loss = loss
             
             # Save the latest model
-            if loss <= net.best_loss:
+            if loss <= net.best_loss or not epoch % 100:
                 net.best_loss = loss
                 torch.save(net.model.state_dict(), net.save_model_path)
 
@@ -66,6 +66,9 @@ def train_with_tqdm(net: nn.Module, train_data: DataLoader, epochs: int, eval_da
                 if net.early_stopping and np.abs(loss.item() - prev_loss) < net.early_stopping_thresh:
                     logger.warn(f'Early stopping at epoch {e_num+1} as the absolute loss difference between the previous run and the current was less than {net.early_stopping_thresh}')
                     break
+
+    # Save the final model
+    torch.save(net.model.state_dict(), net.save_model_path)
 
     # Save the loss history and evaluation metric
     np.save(net.save_loss_path, np.array(net.loss_hist))
