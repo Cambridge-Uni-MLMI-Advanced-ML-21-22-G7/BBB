@@ -46,10 +46,10 @@ def plot_bbb_regression_predictions(
     # ax.fill_between(X_val_arr[:,0], Y_val_pred_mean-2*np.sqrt(Y_val_pred_var), Y_val_pred_mean+2*np.sqrt(Y_val_pred_var), color='tab:green', alpha=0.2)
 
     # 0th and 100th percentile
-    ax.fill_between(X_val_arr[:,0], Y_val_pred_quartiles[0,:], Y_val_pred_quartiles[3,:], color='tab:blue', alpha=0.25,  label='25th-75th Percentile')
+    ax.fill_between(X_val_arr[:,0], Y_val_pred_quartiles[0,:], Y_val_pred_quartiles[3,:], color='tab:blue', alpha=0.25,  label='5th-95th Percentile')
     
     # 25th and 75th percentile
-    ax.fill_between(X_val_arr[:,0], Y_val_pred_quartiles[1,:], Y_val_pred_quartiles[2,:], color='tab:orange', alpha=0.50,  label='5th-95th Percentile')
+    ax.fill_between(X_val_arr[:,0], Y_val_pred_quartiles[1,:], Y_val_pred_quartiles[2,:], color='tab:orange', alpha=0.50,  label='25th-75th Percentile')
 
     # Formatting of plot
 
