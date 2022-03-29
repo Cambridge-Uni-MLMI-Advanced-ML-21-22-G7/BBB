@@ -40,8 +40,9 @@ MODEL_DETAILS_DICT = {
     "dnn_do_1200": ModelDetails("../saved_models/DNN_classification/dropout/0.5/400/2022-03-15-16.26.18", ClassificationDNN, "Dropout - 1200 hidden units, 0.5 dropout"),
 }
 
-def load_model(MODEL):
-    MODEL_DETAILS = MODEL_DETAILS_DICT[MODEL]
+def load_model(MODEL, MODEL_DETAILS=None):
+    if MODEL_DETAILS == None:
+        MODEL_DETAILS = MODEL_DETAILS_DICT[MODEL]
     
     with open(os.path.join(MODEL_DETAILS.dir, 'params.txt'), 'r') as f:
         params_dict = json.load(f)
