@@ -21,7 +21,8 @@ MODEL_DETAILS_DICT = {
     "bnn_sgp_600_1200": ModelDetails("../saved_models/BBB_classification/baseline/single_gaussian_prior/600_epochs/1200/2022-03-27-20.30.22", ClassificationBNN, "BNN - 1200 hidden units, SGP, 600 epochs"),
 
     # BNN - MoG (600 epochs)
-    "bnn_mog_600_1200": ModelDetails("../saved_models/BBB_classification/baseline/mog_prior/sigma_1_1_sigma_2_exp_7/1200/600_epochs/2022-03-27-16.24.44", ClassificationBNN, "BNN - 1200 hidden units, MoG, 600 epochs"),
+    # "bnn_mog_600_1200": ModelDetails("../saved_models/BBB_classification/baseline/mog_prior/sigma_1_1_sigma_2_exp_7/1200/600_epochs/2022-03-27-16.24.44", ClassificationBNN, "BNN - 1200 hidden units, MoG, 600 epochs"), # only eval per 20 steps
+    "bnn_mog_600_1200": ModelDetails("../saved_models/BBB_classification/baseline/mog_prior/sigma_1_1_sigma_2_exp_7/1200/600_epochs/2022-03-29-11.30.06", ClassificationBNN, "BNN - 1200 hidden units, MoG, 600 epochs"),
     
     # BNN - MoG (300 epochs)
     "bnn_mog_1200": ModelDetails("../saved_models/BBB_classification/baseline/mog_prior/sigma_1_1_sigma_2_exp_7/1200/300_epochs/2022-03-27-07.54.00", ClassificationBNN, "BNN - 1200 hidden units, MoG, 300 epochs"),
@@ -43,7 +44,7 @@ MODEL_DETAILS_DICT = {
     "dnn_do_1200": ModelDetails("../saved_models/DNN_classification/dropout/0.5/400/2022-03-15-16.26.18", ClassificationDNN, "Dropout - 1200 hidden units, 0.5 dropout, 300 epochs"),
     
     # DNN - dropout (600 epochs)
-    "dnn_600_1200": ModelDetails("../saved_models/DNN_classification/dropout/0.5/1200/600_epochs/2022-03-29-11.30.56", ClassificationDNN, "Dropout - 1200 hidden units, 0.5 dropout, 600 epochs"),
+    "dnn_do_600_1200": ModelDetails("../saved_models/DNN_classification/dropout/0.5/1200/600_epochs/2022-03-29-11.30.56", ClassificationDNN, "Dropout - 1200 hidden units, 0.5 dropout, 600 epochs"),
 
 }
 
