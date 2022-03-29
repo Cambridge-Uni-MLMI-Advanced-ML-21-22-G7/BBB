@@ -30,14 +30,21 @@ MODEL_DETAILS_DICT = {
     "BNN - 400 hidden units, MoG, 300 epochs"),
 
     # DNN - no dropout (300 epochs)
-    "dnn_1200": ModelDetails("../saved_models/DNN_classification/baseline/1200/2022-03-15-14.28.25", ClassificationDNN, "DNN - 1200 hidden units"),
-    "dnn_800": ModelDetails("../saved_models/DNN_classification/baseline/800/2022-03-15-16.06.09", ClassificationDNN, "DNN - 800 hidden units"),
-    "dnn_400": ModelDetails("../saved_models/DNN_classification/baseline/400/2022-03-15-16.10.34", ClassificationDNN, "DNN - 400 hidden units"),
+    "dnn_1200": ModelDetails("../saved_models/DNN_classification/baseline/1200/2022-03-15-14.28.25", ClassificationDNN, "DNN - 1200 hidden units, 300 epochs"),
+    "dnn_800": ModelDetails("../saved_models/DNN_classification/baseline/800/2022-03-15-16.06.09", ClassificationDNN, "DNN - 800 hidden units, 300 epochs"),
+    "dnn_400": ModelDetails("../saved_models/DNN_classification/baseline/400/2022-03-15-16.10.34", ClassificationDNN, "DNN - 400 hidden units, 300 epochs"),
+
+    # DNN - no dropout (600 epochs)
+    "dnn_600_1200": ModelDetails("../saved_models/DNN_classification/baseline/1200/600_epochs/2022-03-29-11.30.46", ClassificationDNN, "DNN - 1200 hidden units, 600 epochs"),
     
     # DNN - dropout (300 epochs)
-    "dnn_do_400": ModelDetails("../saved_models/DNN_classification/dropout/0.5/1200/2022-03-15-15.21.46", ClassificationDNN, "Dropout - 400 hidden units, 0.5 dropout"),
-    "dnn_do_800": ModelDetails("../saved_models/DNN_classification/dropout/0.5/800/2022-03-15-15.58.04", ClassificationDNN, "Dropout - 800 hidden units, 0.5 dropout"),
-    "dnn_do_1200": ModelDetails("../saved_models/DNN_classification/dropout/0.5/400/2022-03-15-16.26.18", ClassificationDNN, "Dropout - 1200 hidden units, 0.5 dropout"),
+    "dnn_do_400": ModelDetails("../saved_models/DNN_classification/dropout/0.5/1200/2022-03-15-15.21.46", ClassificationDNN, "Dropout - 400 hidden units, 0.5 dropout, 300 epochs"),
+    "dnn_do_800": ModelDetails("../saved_models/DNN_classification/dropout/0.5/800/2022-03-15-15.58.04", ClassificationDNN, "Dropout - 800 hidden units, 0.5 dropout, 300 epochs"),
+    "dnn_do_1200": ModelDetails("../saved_models/DNN_classification/dropout/0.5/400/2022-03-15-16.26.18", ClassificationDNN, "Dropout - 1200 hidden units, 0.5 dropout, 300 epochs"),
+    
+    # DNN - dropout (600 epochs)
+    "dnn_600_1200": ModelDetails("../saved_models/DNN_classification/dropout/0.5/1200/600_epochs/2022-03-29-11.30.56", ClassificationDNN, "Dropout - 1200 hidden units, 0.5 dropout, 600 epochs"),
+
 }
 
 def load_model(MODEL, MODEL_DETAILS=None):
