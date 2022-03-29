@@ -19,6 +19,8 @@ MODEL_DETAILS_DICT = {
 
     # BNN - Singe Gaussian Prior (600 epochs)
     "bnn_sgp_600_1200": ModelDetails("../saved_models/BBB_classification/baseline/single_gaussian_prior/600_epochs/1200/2022-03-27-20.30.22", ClassificationBNN, "BNN - 1200 hidden units, SGP, 600 epochs"),
+    "bnn_sgp_600_800": ModelDetails("../saved_models/BBB_classification/baseline/single_gaussian_prior/600_epochs/800/2022-03-29-17.41.40", ClassificationBNN, "BNN - 800 hidden units, SGP, 600 epochs"),
+    "bnn_sgp_600_400": ModelDetails("../saved_models/BBB_classification/baseline/single_gaussian_prior/600_epochs/400/2022-03-29-17.35.15", ClassificationBNN, "BNN - 400 hidden units, SGP, 600 epochs"),
 
     # BNN - MoG (600 epochs)
     # "bnn_mog_600_1200": ModelDetails("../saved_models/BBB_classification/baseline/mog_prior/sigma_1_1_sigma_2_exp_7/1200/600_epochs/2022-03-27-16.24.44", ClassificationBNN, "BNN - 1200 hidden units, MoG, 600 epochs"), # only eval per 20 steps
