@@ -22,14 +22,19 @@ MODEL_DETAILS_DICT = {
     "bnn_sgp_600_800": ModelDetails("../saved_models/BBB_classification/baseline/single_gaussian_prior/600_epochs/800/2022-03-29-17.41.40", ClassificationBNN, "BNN - 800 hidden units, SGP, 600 epochs"),
     "bnn_sgp_600_400": ModelDetails("../saved_models/BBB_classification/baseline/single_gaussian_prior/600_epochs/400/2022-03-29-17.35.15", ClassificationBNN, "BNN - 400 hidden units, SGP, 600 epochs"),
 
+    # BNN - Singe Gaussian Prior (600 epochs), eval every step
+    "bnn_sgp_600_1200_every": ModelDetails("../saved_models/BBB_classification/baseline/mog_prior/sigma_1_1_sigma_2_exp_7/1200/600_epochs/2022-03-29-11.30.06", ClassificationBNN, "BNN - 1200 hidden units, SGP, 600 epochs"),
+
     # BNN - MoG (600 epochs)
     # "bnn_mog_600_1200": ModelDetails("../saved_models/BBB_classification/baseline/mog_prior/sigma_1_1_sigma_2_exp_7/1200/600_epochs/2022-03-27-16.24.44", ClassificationBNN, "BNN - 1200 hidden units, MoG, 600 epochs"), # only eval per 20 steps
     "bnn_mog_600_1200": ModelDetails("../saved_models/BBB_classification/baseline/mog_prior/sigma_1_1_sigma_2_exp_7/1200/600_epochs/2022-03-29-11.30.06", ClassificationBNN, "BNN - 1200 hidden units, MoG, 600 epochs"),
+    "bnn_mog_600_800": ModelDetails("../saved_models/BBB_classification/baseline/mog_prior/sigma_1_1_sigma_2_exp_7/800/600_epochs/2022-03-29-17.25.29", ClassificationBNN, "BNN - 800 hidden units, MoG, 600 epochs"),
+    "bnn_mog_600_400": ModelDetails("../saved_models/BBB_classification/baseline/mog_prior/sigma_1_1_sigma_2_exp_7/400/600_epochs/2022-03-29-17.41.59", ClassificationBNN, "BNN - 400 hidden units, MoG, 600 epochs"),
     
     # BNN - MoG (300 epochs)
     "bnn_mog_1200": ModelDetails("../saved_models/BBB_classification/baseline/mog_prior/sigma_1_1_sigma_2_exp_7/1200/300_epochs/2022-03-27-07.54.00", ClassificationBNN, "BNN - 1200 hidden units, MoG, 300 epochs"),
-    "bnn_mog_800": ModelDetails("../saved_models/BBB_classification/baseline/mog_prior/sigma_1_1_sigma_2_exp_7/800/2022-03-27-10.10.21", ClassificationBNN, "BNN - 800 hidden units, MoG, 300 epochs"),
-    "bnn_mog_400": ModelDetails("../saved_models/BBB_classification/baseline/mog_prior/sigma_1_1_sigma_2_exp_7/400/2022-03-27-07.55.07", ClassificationBNN, 
+    "bnn_mog_800": ModelDetails("../saved_models/BBB_classification/baseline/mog_prior/sigma_1_1_sigma_2_exp_7/800/300_epochs/2022-03-27-10.10.21", ClassificationBNN, "BNN - 800 hidden units, MoG, 300 epochs"),
+    "bnn_mog_400": ModelDetails("../saved_models/BBB_classification/baseline/mog_prior/sigma_1_1_sigma_2_exp_7/400/300_epochs/2022-03-27-07.55.07", ClassificationBNN, 
     "BNN - 400 hidden units, MoG, 300 epochs"),
 
     # DNN - no dropout (300 epochs)
