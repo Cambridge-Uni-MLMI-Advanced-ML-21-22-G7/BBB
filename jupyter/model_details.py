@@ -37,6 +37,9 @@ MODEL_DETAILS_DICT = {
     "bnn_mog_400": ModelDetails("../saved_models/BBB_classification/baseline/mog_prior/sigma_1_1_sigma_2_exp_7/400/300_epochs/2022-03-27-07.55.07", ClassificationBNN, 
     "BNN - 400 hidden units, MoG, 300 epochs"),
 
+    # BNN - Laplace (600 epochs)
+    "bnn_lap_600_1200":  ModelDetails("../saved_models/BBB_classification/baseline/laplace_prior/b_0.15/1200/600_epochs/2022-03-28-21.50.25", ClassificationBNN, "BNN - 1200 hidden units, Laplace, 600 epochs"),
+
     # DNN - no dropout (300 epochs)
     "dnn_1200": ModelDetails("../saved_models/DNN_classification/baseline/1200/2022-03-15-14.28.25", ClassificationDNN, "DNN - 1200 hidden units, 300 epochs"),
     "dnn_800": ModelDetails("../saved_models/DNN_classification/baseline/800/2022-03-15-16.06.09", ClassificationDNN, "DNN - 800 hidden units, 300 epochs"),
