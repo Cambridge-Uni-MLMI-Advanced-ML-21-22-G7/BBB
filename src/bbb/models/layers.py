@@ -211,7 +211,7 @@ class BFC_LRT(BaseBFC):
         
         self.kl_d = 0
 
-    def forward(self, input, sample=True):
+    def forward(self, input, sample=False):
         """For every forward pass in training, we are drawing samples from a distribution over the activation function.
         """
         
@@ -230,9 +230,12 @@ class BFC_LRT(BaseBFC):
             activation = w_act_sample + b_act_sample
             return activation
         else:
-            raise NotImplementedError(
-                "Not yet implemented."
-            )
+            w = self.w_var_post.sample()
+            b = self.b_var_post.sample()
+
+            self.kl_d = 0
+
+            return nn.functional.linear(input, w, b)
             
 
     def _calc_kl_d(self, mu_q: Tensor, sigma_q: Tensor, mu_p: Tensor, sigma_p: Tensor) -> float:

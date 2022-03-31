@@ -513,33 +513,33 @@ class RegressionBNN(RegressionEval, BaseBNN):
         mean, var = output.mean(dim=-1), output.var(dim=-1)
 
         # Determine the quartiles
-        q = torch.tensor([0., 0.25, 0.75, 1.]).to(DEVICE)
+        q = torch.tensor([0.05, 0.25, 0.75, 0.95]).to(DEVICE)
         quartiles = torch.quantile(output, q, dim=-1)
 
         return mean, var, quartiles
 
-    # def lpd(self, X: Tensor, Y: Tensor):
-    #     """Calculate the log predictive density of the model.
+    def lpd(self, X: Tensor, Y: Tensor):
+        """Calculate the log predictive density of the model.
 
-    #     https://vasishth.github.io/bayescogsci/book/expected-log-predictive-density-of-a-model.html
-    #     """
-    #     # Ensure tensor is assigned to correct device
-    #     X = X.to(DEVICE)
-    #     Y = Y.to(DEVICE)
+        https://vasishth.github.io/bayescogsci/book/expected-log-predictive-density-of-a-model.html
+        """
+        # Ensure tensor is assigned to correct device
+        X = X.to(DEVICE)
+        Y = Y.to(DEVICE)
 
-    #     # Put model into evaluation mode
-    #     self.eval()
+        # Put model into evaluation mode
+        self.eval()
 
-    #     # Initialise tensor to hold predictions
-    #     lpd = 0
+        # Initialise tensor to hold predictions
+        lpd = 0
 
-    #     with torch.no_grad():
-    #         # Repeat forward (sampling) <inference_samples> times
-    #         for _ in torch.arange(self.inference_samples):
-    #             preds = self.forward(X)
-    #             lpd += (1/self.inference_samples) * torch.distributions.Normal(preds, self.regression_likelihood_noise).log_prob(Y).mean()
+        with torch.no_grad():
+            # Repeat forward (sampling) <inference_samples> times
+            for _ in torch.arange(self.inference_samples):
+                preds = self.forward(X)
+                lpd += (1/self.inference_samples) * torch.distributions.Normal(preds, torch.ones(len(preds))*self.regression_likelihood_noise).log_prob(Y).mean()
 
-    #     return lpd
+        return lpd
 
 class ClassificationBNN(ClassificationEval, BaseBNN):
     # NOTE: This class inherits from ClassificationEval and then BaseBNN
